@@ -1,0 +1,114 @@
+<div class="product-form">
+  <h2 *ngIf="!isEdit">Agregar producto</h2>
+  <h2 *ngIf="isEdit">Editar producto</h2>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div>
+      <label for="nombre">Nombre</label>
+      <input id="nombre" formControlName="nombre" />
+    </div>
+    <div>
+      <label for="descripcion">Descripción</label>
+      <input id="descripcion" formControlName="descripcion" />
+    </div>
+    <div>
+      <label for="codigoBarras">Código de barras / SKU</label>
+      <input id="codigoBarras" formControlName="codigoBarras" />
+    </div>
+    <div>
+      <label for="precioCompra">Precio compra</label>
+      <input id="precioCompra" type="number" formControlName="precioCompra" />
+    </div>
+    <div>
+      <label for="precioVenta">Precio venta</label>
+      <input id="precioVenta" type="number" formControlName="precioVenta" />
+    </div>
+    <div>
+      <label for="stockActual">Stock actual</label>
+      <input id="stockActual" type="number" formControlName="stockActual" />
+    </div>
+    <div>
+      <label for="stockMinimo">Stock mínimo</label>
+      <input id="stockMinimo" type="number" formControlName="stockMinimo" />
+    </div>
+
+    <div>
+      <label>Categoría</label>
+      <ng-container *ngIf="!loadingCategories; else loadingCats">
+        <div class="category-tree">
+          <ng-container *ngFor="let cat of categoriesTree">
+            <app-category-node [node]="cat" [form]="form" (addCategory)="onAddCategory($event)"></app-category-node>
+          </ng-container>
+        </div>
+        <div *ngIf="form.value.categoryId">
+          <small>Seleccionado: {{ getCategoryPath(findCategoryById(form.value.categoryId)) }}</small>
+        </div>
+        <button type="button" (click)="onAddCategory(null)">Agregar categoría principal</button>
+      </ng-container>
+      <ng-template #loadingCats>
+        <span>Cargando categorías...</span>
+      </ng-template>
+    </div>
+
+    <div class="actions">
+      <button type="submit" [disabled]="form.invalid">{{ isEdit ? 'Guardar' : 'Crear' }}</button>
+      <button type="button" (click)="cancel()">Cancelar</button>
+      
+      <!-- Botón para generar copys con IA (solo en modo edición) -->
+      <button 
+        type="button" 
+        class="btn-ai-post"
+        *ngIf="isEdit"
+        (click)="generarCopys('todas')"
+        [disabled]="generandoPost"
+        title="Generar copys para redes sociales con IA">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+          <path d="M9 13v2"></path>
+          <path d="M15 13v2"></path>
+        </svg>
+        {{ generandoPost ? 'Generando...' : 'Crear Post con IA' }}
+      </button>
+    </div>
+  </form>
+
+  <!-- Modal con copys generados -->
+  <div class="ai-copys-modal" *ngIf="mostrarCopys">
+    <div class="ai-copys-overlay" (click)="cerrarCopys()"></div>
+    <div class="ai-copys-content">
+      <div class="ai-copys-header">
+        <h3>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Copys generados con IA
+        </h3>
+        <button class="ai-copys-close" (click)="cerrarCopys()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="ai-copys-list">
+        <div class="ai-copy-item" *ngFor="let copy of copysGenerados; let i = index">
+          <div class="ai-copy-header">
+            <span class="ai-copy-number">Versión {{ i + 1 }}</span>
+            <button class="ai-copy-btn" (click)="copiarCopy(copy)" title="Copiar al portapapeles">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+              </svg>
+              Copiar
+            </button>
+          </div>
+          <pre class="ai-copy-text">{{ copy }}</pre>
+        </div>
+        
+        <div class="ai-copys-footer">
+          <p>💡 <strong>Tip:</strong> Puedes editar estos textos antes de publicarlos en tus redes sociales</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

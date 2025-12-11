@@ -1,0 +1,25 @@
+<div class="categories-setup">
+  <h2>Gestión de categorías</h2>
+
+  <div *ngIf="errorMsg" class="error">
+    <span>{{ errorMsg }}</span>
+    <button (click)="clearError()">Cerrar</button>
+  </div>
+
+  <div class="new">
+    <button (click)="onAddCategory(null)">Agregar categoría principal</button>
+  </div>
+
+  <div class="list">
+    <ng-container *ngIf="!loadingCategories; else loadingCats">
+      <app-category-setup-node *ngFor="let cat of categoriesTree" [node]="cat" (addCategory)="onAddCategory($event)" (editCategory)="onEditCategory($event)" (deleteCategory)="onDeleteCategory($event)"></app-category-setup-node>
+    </ng-container>
+    <ng-template #loadingCats>
+      <span>Cargando categorías...</span>
+    </ng-template>
+  </div>
+
+  <div class="actions">
+    <a routerLink="/inventory">Volver</a>
+  </div>
+</div>

@@ -1,0 +1,24 @@
+/* Root app styles */
+.app-root {
+	min-height: 100vh;
+}
+
+/* Botón hamburguesa para móvil */
+.hamburger {
+	position: fixed;
+	top: 0.75rem;
+	left: 0.75rem;
+	z-index: 101; /* por encima del sidebar */
+	background: #1565c0;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	padding: 0.5rem 0.6rem;
+	font-size: 1.1rem;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+	display: none;
+}
+
+@media (max-width: 900px) {
+	.hamburger { display: inline-block; }
+}

@@ -1,0 +1,69 @@
+<aside class="sidebar" [class.closed]="!isOpen">
+  <div class="brand-section">
+    <svg class="brand-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M5 10h22M8 6h16M6 14h20v12a2 2 0 01-2 2H8a2 2 0 01-2-2V14z"/>
+    </svg>
+    <div class="brand">Ventify</div>
+  </div>
+  <nav>
+    <!-- 🏠 Inicio - visible para todos -->
+    <a *ngIf="permisos.verInicio" routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeOnSmall()">
+      <span class="nav-icon">🏠</span>
+      <span>Inicio</span>
+    </a>
+    
+    <!-- 📦 Inventario - Dueño, Gerente, Almacenista -->
+    <a *ngIf="permisos.verInventario" routerLink="/dashboard/inventory" routerLinkActive="active" (click)="closeOnSmall()" class="with-badge">
+      <span class="nav-icon">📦</span>
+      <span>Inventario</span>
+      <span *ngIf="stockBajoCount > 0" 
+            class="badge-danger" 
+            [class.urgent]="stockBajoCount >= 5"
+            [title]="stockBajoCount + ' productos con stock bajo'">
+        {{ stockBajoCount }}
+      </span>
+    </a>
+    
+
+    
+    <!-- 💳 Punto de Venta - Dueño, Gerente, Cajero -->
+    <a *ngIf="permisos.verPuntoVenta" routerLink="/dashboard/pos" routerLinkActive="active" (click)="closeOnSmall()">
+      <span class="nav-icon">💳</span>
+      <span>Punto de Venta</span>
+    </a>
+    
+    <!-- 💰 Caja - Dueño, Gerente, Cajero -->
+    <a *ngIf="permisos.verCaja" routerLink="/dashboard/caja" routerLinkActive="active" (click)="closeOnSmall()">
+      <span class="nav-icon">💰</span>
+      <span>Caja</span>
+    </a>
+    
+    <!-- 📊 Reportes - Dueño, Gerente, Cajero (cajero solo sus ventas del día) -->
+    <a *ngIf="permisos.verReportes" routerLink="/dashboard/reports" routerLinkActive="active" (click)="closeOnSmall()">
+      <span class="nav-icon">📊</span>
+      <span>Reportes</span>
+    </a>
+    
+    <!-- ⚙️ Configuración eliminada del nav: ahora en botón de perfil -->
+  </nav>
+  <div class="sidebar-footer">
+      <div class="user-info" role="button" (click)="openProfile()" title="Perfil y configuración">
+        <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Perfil" class="user-avatar-img">
+        <div *ngIf="!fotoPerfilUrl" class="user-avatar-default">{{ getUserInitialsInternal() }}</div>
+      <div class="user-details">
+          <div class="user-name">{{ getUserDisplayName() }}</div>
+          <div class="user-role" 
+               [class.dueno]="permissionsService.isDueno()" 
+               [class.gerente]="permissionsService.isGerente()"
+               [class.cajero]="permissionsService.isCajero()"
+               [class.almacenista]="permissionsService.isAlmacenista()">
+            {{ getRoleLabel() }}
+          </div>
+      </div>
+    </div>
+      <button class="logout-btn" (click)="performLogout()" title="Cerrar sesión">
+        <span class="logout-icon">🚪</span>
+        <span>Cerrar sesión</span>
+      </button>
+  </div>
+</aside>

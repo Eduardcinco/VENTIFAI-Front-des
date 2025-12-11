@@ -1,0 +1,19 @@
+<section class="inventory">
+  <h2>Inventario</h2>
+  <div class="toolbar">
+    <a class="btn" routerLink="/inventory/add">+ Agregar producto</a>
+    <a class="btn" routerLink="/inventory/categories">Gestionar categorías</a>
+  </div>
+  <div *ngIf="loading">Cargando productos...</div>
+  <div *ngIf="!loading && products.length === 0">No hay productos.</div>
+
+  <div class="products" *ngIf="!loading && products.length > 0">
+    <div class="product" *ngFor="let p of products">
+      <div class="left">
+        <div class="name">{{ p.nombre || p.name }}</div>
+        <div class="meta">{{ p.category?.name || p.category || 'Sin categoría' }} · Stock: {{ p.stockActual ?? p.stock }}</div>
+      </div>
+      <div class="right">{{ (p.precioVenta ?? p.price) | currency }}</div>
+    </div>
+  </div>
+</section>

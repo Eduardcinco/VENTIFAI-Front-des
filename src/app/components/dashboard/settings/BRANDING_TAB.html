@@ -1,0 +1,78 @@
+<!-- ===== TAB BRANDING - PALETAS TEMÁTICAS ===== -->
+<div class="settings-card" *ngIf="activeTab === 'branding'">
+  <h3>🎨 Personalización Visual</h3>
+  <p>Elige la paleta de colores que mejor represente tu negocio. Los cambios se aplican en tiempo real.</p>
+
+  <!-- Selector de Tipo de Paleta -->
+  <div class="paleta-filters">
+    <button class="filter-btn active">🎯 Todas</button>
+    <button class="filter-btn">💼 Masculinas</button>
+    <button class="filter-btn">💗 Femeninas</button>
+  </div>
+
+  <!-- Grid de Paletas con Previews -->
+  <div class="paletas-grid">
+    <div 
+      *ngFor="let paleta of paletasTematicas" 
+      class="paleta-card"
+      [class.selected]="paletaSeleccionada === paleta.id"
+      (click)="seleccionarPaleta(paleta.id)"
+    >
+      <!-- Preview Image (placeholder por ahora) -->
+      <div class="paleta-preview">
+        <div class="preview-placeholder">
+          <div class="preview-bar" [style.background]="paleta.colores.primario"></div>
+          <div class="preview-content">
+            <div class="preview-card" [style.border-color]="paleta.colores.primario">
+              <div class="preview-button" [style.background]="paleta.colores.primario"></div>
+              <div class="preview-text" [style.background]="paleta.colores.fondo"></div>
+              <div class="preview-accent" [style.background]="paleta.colores.acento"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nombre y Badge -->
+      <div class="paleta-info">
+        <h4>{{ paleta.nombre }}</h4>
+        <span class="paleta-badge" [class.masculina]="paleta.tipo === 'masculina'" [class.femenina]="paleta.tipo === 'femenina'">
+          {{ paleta.tipo === 'masculina' ? '💼' : '💗' }}
+        </span>
+      </div>
+
+      <!-- Check Mark si está seleccionada -->
+      <div class="paleta-check" *ngIf="paletaSeleccionada === paleta.id">
+        <span>✓</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modo Oscuro Toggle -->
+  <div class="modo-oscuro-section">
+    <div class="settings-card" style="background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%); color: white;">
+      <h3 style="color: white;">🌙 Modo Oscuro</h3>
+      <p style="color: #cbd5e0;">Activa el modo oscuro para reducir la fatiga visual en ambientes con poca luz.</p>
+      
+      <div class="mode-toggle">
+        <span style="color: white; font-weight: 600;">{{ branding.modoOscuro ? 'Activado' : 'Desactivado' }}</span>
+        <div 
+          class="toggle-switch" 
+          [class.active]="branding.modoOscuro"
+          (click)="branding.modoOscuro = !branding.modoOscuro; applyBranding()"
+        >
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botones de Acción -->
+  <div class="actions-row">
+    <button class="btn btn-secondary" (click)="resetBranding()">
+      🔄 Restaurar Predeterminado
+    </button>
+    <button class="btn btn-primary" (click)="guardarPaletaSeleccionada()">
+      💾 Guardar Estilo
+    </button>
+  </div>
+</div>

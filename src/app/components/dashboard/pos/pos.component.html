@@ -1,0 +1,231 @@
+<div class="pos-container">
+  <!-- ALERTA SI NO HAY CAJA ABIERTA -->
+  @if (!cajaState.abierta) {
+  <div class="alert-warning">
+    <strong>⚠️ No hay caja abierta</strong>
+    <p>Debes abrir una caja antes de realizar ventas. <a routerLink="/dashboard/caja">Ir a Caja</a></p>
+  </div>
+  }
+
+  <div class="pos-root">
+    <!-- PANEL IZQUIERDO: PRODUCTOS -->
+    <div class="pos-left">
+      <div class="pos-header">
+        <h4>Productos Disponibles</h4>
+        <div class="left-actions">
+          <span class="product-count">{{ products.length }} productos</span>
+          <button class="cart-toggle" (click)="isCartCollapsed = !isCartCollapsed">
+            {{ isCartCollapsed ? 'Mostrar carrito' : 'Ocultar carrito' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- BÚSQUEDA AVANZADA -->
+      <div class="search-bar">
+        <input 
+          type="text" 
+          placeholder="🔍 Buscar por nombre, ID o código de barras..." 
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="searchProducts()"
+          class="search-input"
+        />
+        @if (searchTerm) {
+        <button class="clear-search" (click)="searchTerm=''; searchProducts()">✖</button>
+        }
+      </div>
+
+      <!-- GRID DE PRODUCTOS -->
+      <div class="products-grid">
+        @for (p of products; track p.id) {
+        <div class="product-card" [class.disabled]="(p.stock || p.cantidadDisponible) <= 0">
+          <!-- Badge de descuento centrado arriba -->
+          @if (p.tieneDescuento && p.descuentoPorcentaje) {
+          <div class="discount-badge-top">-{{ p.descuentoPorcentaje }}% OFF</div>
+          }
+          
+          <div class="card-header">
+            <div class="name">{{ p.nombre || p.name }}</div>
+            <div class="price-container">
+              @if (p.tieneDescuento) {
+              <div class="price original-price">${{ (p.precioVenta || p.price).toFixed(2) }}</div>
+              <div class="price discounted-price">${{ (p.precioFinal || p.precioVenta || p.price).toFixed(2) }}</div>
+              @if (p.ahorro > 0) {
+              <div class="ahorro-tag">¡Ahorras ${{ p.ahorro.toFixed(2) }}!</div>
+              }
+              } @else {
+              <div class="price">${{ (p.precioVenta || p.price).toFixed(2) }}</div>
+              }
+            </div>
+          </div>
+          <div class="card-body">
+            @if (p.descripcion) {
+            <div class="desc">{{ p.descripcion }}</div>
+            }
+            <div class="meta">
+              <span class="stock" [class.low]="(p.stock || p.cantidadDisponible) < 10">
+                Stock: {{ p.stock || p.cantidadDisponible || 0 }}
+              </span>
+              @if (p.id) {
+              <span class="id">ID: {{ p.id }}</span>
+              }
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn-add" [disabled]="(p.stock || p.cantidadDisponible) <= 0" (click)="$event.stopPropagation(); add(p)">
+              {{ (p.stock || p.cantidadDisponible) > 0 ? 'Agregar' : 'Sin stock' }}
+            </button>
+          </div>
+        </div>
+        }
+        @if (products.length === 0) {
+        <div class="empty-products">
+          <p>{{ searchTerm ? 'No se encontraron productos' : 'No hay productos disponibles' }}</p>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- PANEL DERECHO: CARRITO Y PAGO -->
+    <div class="pos-right" [class.collapsed]="isCartCollapsed">
+      <div class="pos-header">
+        <h4>🛒 Carrito de Compra</h4>
+        @if (cajaState.abierta && cajaState.caja?.id) {
+        <div class="caja-status">
+          <small>
+            Caja abierta (ID: {{ cajaState.caja.id }}) · Saldo: {{ cajaState.caja.montoActual | currency:'MXN' }}
+          </small>
+        </div>
+        }
+        <div class="cart-actions">
+          @if (cart().length > 0) {
+          <button class="btn-clear-cart" (click)="clearCart()">Vaciar carrito</button>
+          }
+        </div>
+      </div>
+
+      <!-- CARRITO -->
+      <div class="cart-container">
+        @if (cart().length === 0 && !isCartCollapsed) {
+        <div class="empty-cart">
+          <p>Carrito vacío</p>
+          <small>Agrega productos desde el panel izquierdo</small>
+        </div>
+
+        }
+        @if (cart().length > 0 && !isCartCollapsed) {
+        <div class="cart-items">
+          @for (item of cart(); track item.id) {
+          <div class="cart-item">
+            <div class="cart-item-info">
+              <div class="cart-item-name">
+                {{ item.nombre || item.name }}
+                @if (item.tieneDescuento && item.descuentoPorcentaje) {
+                <span class="cart-discount-badge">-{{ item.descuentoPorcentaje }}% OFF</span>
+                }
+              </div>
+              <div class="cart-item-price">
+                @if (item.tieneDescuento) {
+                <span class="original-price-cart">${{ item.precioOriginal.toFixed(2) }} c/u</span>
+                }
+                ${{ item.precioUnitario.toFixed(2) }} c/u
+                @if (item.tieneDescuento && item.ahorro > 0) {
+                <span class="ahorro-cart">Ahorras: ${{ (item.ahorro * item.qty).toFixed(2) }}</span>
+                }
+              </div>
+            </div>
+            
+            <div class="cart-item-controls">
+              <div class="qty-control">
+                <button (click)="updateQty(item, item.qty - 1)">-</button>
+                <input 
+                  type="number" 
+                  [(ngModel)]="item.qty" 
+                  (ngModelChange)="updateQty(item, $event)"
+                  min="1"
+                  [max]="item.stock || item.cantidadDisponible"
+                />
+                <button (click)="updateQty(item, item.qty + 1)">+</button>
+              </div>
+              
+              <div class="cart-item-total">
+                ${{ ((item.precioUnitario || item.precioVenta || item.price) * item.qty).toFixed(2) }}
+              </div>
+              
+              <button class="btn-remove" (click)="removeItem($index)" title="Eliminar">🗑️</button>
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- TOTAL -->
+      <div class="cart-total sticky">
+        <div class="total-row">
+          <span class="total-label">Subtotal</span>
+          <span class="total-value">${{ total().toFixed(2) }}</span>
+        </div>
+        <div class="total-row final">
+          <span class="total-label">Total a Pagar</span>
+          <span class="total-value highlight">${{ total().toFixed(2) }}</span>
+        </div>
+      </div>
+
+      <!-- OPCIONES DE PAGO -->
+      @if (cart().length > 0) {
+      <div class="checkout-section">
+        <h4>Información de Pago</h4>
+
+        <div class="form-group">
+          <label for="paymentMethod">Método de Pago</label>
+          <select id="paymentMethod" [(ngModel)]="paymentMethod" class="select-input">
+            <option value="efectivo">💵 Efectivo</option>
+            <option value="tarjeta">💳 Tarjeta</option>
+            
+            <option value="transferencia">🏦 Transferencia</option>
+          </select>
+        </div>
+
+        <!-- CÁLCULO DE CAMBIO (solo efectivo) -->
+        @if (paymentMethod === 'efectivo') {
+        <div class="payment-calc">
+          <div class="form-group">
+            <label for="montoRecibido">Monto Recibido</label>
+            <input 
+              id="montoRecibido" 
+              type="number" 
+              [(ngModel)]="montoRecibido" 
+              min="0" 
+              step="0.01"
+              placeholder="0.00"
+              class="money-input"
+            />
+          </div>
+
+          @if (montoRecibido > 0) {
+          <div class="change-display">
+            @if (cambio > 0) {
+              <span>Cambio a devolver:</span>
+              <span class="change-amount success">${{ cambio.toFixed(2) }}</span>
+            }
+            @if (faltante > 0) {
+            <div class="change-row">
+              <span>Falta por recibir:</span>
+              <span class="change-amount error">${{ faltante.toFixed(2) }}</span>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+
+        
+
+        <button class="btn-checkout" (click)="createSale()" [disabled]="loading || !cajaState.abierta || cart().length === 0">
+          {{ loading ? '⏳ Procesando...' : '✅ Finalizar Venta' }}
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+</div>

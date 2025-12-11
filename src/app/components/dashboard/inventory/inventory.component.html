@@ -1,0 +1,650 @@
+<div class="inventory-header">
+  <div>
+    <h1>Gestión de Inventario</h1>
+    <p>Administra todos los productos de tu negocio</p>
+  </div>
+  <!-- Botón agregar: solo Dueño, Gerente y Almacenista pueden agregar productos -->
+  <button class="add-btn" (click)="openForm()" [disabled]="!cajaState.abierta" *ngIf="permisos.agregarProducto">+ Agregar Producto</button>
+</div>
+
+<!-- Banner de estado de caja -->
+<div class="caja-banner" *ngIf="!cajaState.abierta">
+  <strong>⚠️ No hay caja abierta</strong>
+  <p>Algunas acciones quedan deshabilitadas hasta abrir caja. <a routerLink="/dashboard/caja">Ir a Caja</a></p>
+</div>
+
+<!-- FORMULARIO DE PRODUCTO (MODAL) -->
+<div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ form.id ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
+      <button class="close-btn" (click)="closeForm()">✖</button>
+    </div>
+    
+    <form class="product-form" (ngSubmit)="saveProduct()">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nombre">Nombre del Producto *</label>
+          <input 
+            id="nombre" 
+            name="nombre" 
+            type="text" 
+            [(ngModel)]="form.nombre" 
+            placeholder="Ej: Luces Navideñas 5M"
+            required
+          />
+          <small class="field-error" *ngIf="fieldErrors['nombre']">{{ fieldErrors['nombre'] }}</small>
+        </div>
+
+        <div class="form-group">
+          <label for="codigoBarras">Código de Barras / ID</label>
+          <input 
+            id="codigoBarras" 
+            name="codigoBarras" 
+            type="text" 
+            [(ngModel)]="form.codigoBarras" 
+            placeholder="Opcional"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="categoria">Categoría *</label>
+          <select id="categoria" name="categoria" [(ngModel)]="form.selectedCategoryId">
+            <option [ngValue]="null">Seleccionar categoría existente</option>
+            <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="nuevaCategoria">O crear nueva categoría</label>
+          <div class="inline-row">
+            <input 
+              id="nuevaCategoria" 
+              name="nuevaCategoria" 
+              type="text" 
+              [(ngModel)]="form.nuevaCategoria" 
+              placeholder="Escribir nueva categoría"
+            />
+            <button type="button" class="btn small" (click)="createNewCategoryInline()" [disabled]="!form.nuevaCategoria || !form.nuevaCategoria.trim()">+ Nueva</button>
+          </div>
+          <small *ngIf="!categories || categories.length === 0">No hay categorías. Crea tu primera categoría para habilitar Guardar.</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción (Opcional)</label>
+        <textarea 
+          id="descripcion" 
+          name="descripcion" 
+          [(ngModel)]="form.descripcion" 
+          rows="2"
+          placeholder="Detalles del producto..."
+        ></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="precioCompra">Precio de Compra (por unidad) *</label>
+          <input 
+            id="precioCompra" 
+            name="precioCompra" 
+            type="number" 
+            [(ngModel)]="form.precioCompra" 
+            min="0" 
+            step="0.01"
+            required
+          />
+          <small class="field-error" *ngIf="fieldErrors['precioCompra']">{{ fieldErrors['precioCompra'] }}</small>
+        </div>
+
+        <div class="form-group">
+          <label for="precioVenta">Precio de Venta (por unidad) *</label>
+          <input 
+            id="precioVenta" 
+            name="precioVenta" 
+            type="number" 
+            [(ngModel)]="form.precioVenta" 
+            min="0" 
+            step="0.01"
+            required
+          />
+          <small class="field-error" *ngIf="fieldErrors['precioVenta']">{{ fieldErrors['precioVenta'] }}</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cantidadInicial">Cantidad Comprada/Inicial *</label>
+          <input 
+            id="cantidadInicial" 
+            name="cantidadInicial" 
+            type="number" 
+            [(ngModel)]="form.cantidadInicial" 
+            min="0"
+            required
+          />
+          <small class="field-error" *ngIf="fieldErrors['cantidadInicial']">{{ fieldErrors['cantidadInicial'] }}</small>
+        </div>
+
+        <div class="form-group">
+          <label for="merma">Merma (Defectuosos/Pérdida)</label>
+          <input 
+            id="merma" 
+            name="merma" 
+            type="number" 
+            [(ngModel)]="form.merma" 
+            min="0"
+            [max]="form.cantidadInicial"
+          />
+          <small class="field-error" *ngIf="fieldErrors['merma']">{{ fieldErrors['merma'] }}</small>
+        </div>
+
+        <div class="form-group">
+          <label for="stockMinimo">Stock Mínimo (Alerta) *</label>
+          <input 
+            id="stockMinimo" 
+            name="stockMinimo" 
+            type="number" 
+            [(ngModel)]="form.stockMinimo" 
+            min="1"
+            placeholder="5"
+            required
+          />
+          <small style="color:#6b7280;font-size:0.85rem;">Se alertará cuando el stock baje de este número</small>
+        </div>
+      </div>
+
+      <!-- RESUMEN ANTES DE GUARDAR -->
+      <div class="form-summary">
+        <h3>Resumen del Producto</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">Stock Final:</span>
+            <span class="summary-value">{{ stockFinal }} unidades</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Ganancia por Unidad:</span>
+            <span class="summary-value" [class.negative]="gananciaUnitaria < 0">
+              ${{ gananciaUnitaria | number:'1.2-2' }}
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Ganancia Total Estimada:</span>
+            <span class="summary-value success" [class.negative]="gananciaTotal < 0">
+              ${{ gananciaTotal | number:'1.2-2' }}
+            </span>
+          </div>
+          <div class="summary-item" *ngIf="form.merma > 0">
+            <span class="summary-label">Pérdida por Merma:</span>
+            <span class="summary-value negative">
+              ${{ (form.precioCompra * form.merma) | number:'1.2-2' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn secondary" (click)="closeForm()">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="(!form.selectedCategoryId && !form.nuevaCategoria) || !cajaState.abierta">
+          {{ form.id ? 'Actualizar Producto' : 'Guardar Producto' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- BARRA DE BÚSQUEDA Y FILTROS -->
+<div class="inventory-toolbar">
+  <div class="search-box">
+    <mat-icon class="search-icon">search</mat-icon>
+    <input 
+      type="text" 
+      placeholder="Buscar por nombre, categoría o código..." 
+      [(ngModel)]="search" 
+    />
+  </div>
+  
+  <div class="toolbar-actions">
+    <label class="toggle-ocultos">
+      <input type="checkbox" [(ngModel)]="mostrarOcultos" (change)="onToggleMostrarOcultos()">
+      <span class="switch"></span>
+      <span>Mostrar ocultos</span>
+    </label>
+    <button class="filters-toggle" (click)="showFilters = !showFilters">
+      <mat-icon>filter_list</mat-icon>
+      <span>Filtros</span>
+    </button>
+  </div>
+</div>
+
+<!-- RESUMEN DEL INVENTARIO -->
+<div class="inventory-summary">
+  <div class="summary-card">
+    <mat-icon>inventory_2</mat-icon>
+    <div>
+      <span class="label">Productos</span>
+      <span class="value">{{filteredProducts.length}}</span>
+    </div>
+  </div>
+  <div class="summary-card">
+    <mat-icon>layers</mat-icon>
+    <div>
+      <span class="label">Stock Total</span>
+      <span class="value">{{totalStock}}</span>
+    </div>
+  </div>
+  <div class="summary-card">
+    <mat-icon>attach_money</mat-icon>
+    <div>
+      <span class="label">Valor Inventario</span>
+      <span class="value">${{totalValue | number:'1.0-0'}}</span>
+    </div>
+  </div>
+  <div class="summary-card success">
+    <mat-icon>trending_up</mat-icon>
+    <div>
+      <span class="label">Ganancia Est.</span>
+      <span class="value">${{gananciaEstimada | number:'1.0-0'}}</span>
+    </div>
+  </div>
+</div>
+
+<!-- GRID DE PRODUCTOS (ESTILO MERCADO) -->
+<div class="inventory-main">
+  <div class="products-grid">
+    <div 
+      class="product-tile" 
+      *ngFor="let p of filteredProducts; trackBy: trackByProduct"
+      [class.inactive]="p.activo === false"
+    >
+      <!-- Badge de descuento -->
+      <div class="discount-ribbon" *ngIf="p.descuentoPorcentaje">
+        -{{p.descuentoPorcentaje}}%
+      </div>
+      
+      <!-- Badge de inactivo -->
+      <div class="inactive-overlay" *ngIf="p.activo === false">
+        <mat-icon>visibility_off</mat-icon>
+        <span>Oculto</span>
+      </div>
+
+      <!-- Nombre del producto -->
+      <div class="tile-name">{{p.nombre || p.name}}</div>
+      
+      <!-- Precio centrado -->
+      <div class="tile-price">
+        <span class="price-current" [class.has-discount]="p.descuentoPorcentaje">
+          ${{p.precioVenta || p.price | number:'1.2-2'}}
+        </span>
+        <span class="price-discounted" *ngIf="p.descuentoPorcentaje">
+          ${{(p.precioVenta || p.price) * (1 - p.descuentoPorcentaje / 100) | number:'1.2-2'}}
+        </span>
+      </div>
+
+      <!-- Stock indicator -->
+      <div class="tile-stock" [class.low]="(p.stock || p.cantidadDisponible || 0) < (p.stockMinimo || 10)">
+        <mat-icon>inventory</mat-icon>
+        {{p.stock || p.cantidadDisponible || 0}}
+      </div>
+
+      <!-- Iconos de acción - mostrar según permisos -->
+      <div class="tile-actions">
+        <!-- Reabastecer: Dueño, Gerente y Almacenista -->
+        <button class="action-icon restock" title="Reabastecer Producto" (click)="abrirModalReabastecer(p)" *ngIf="permisos.agregarProducto">
+          <mat-icon>add_shopping_cart</mat-icon>
+        </button>
+        <!-- Descuento: solo Dueño y Gerente -->
+        <button class="action-icon descuento" title="Aplicar Descuento" (click)="abrirModalDescuento(p)" *ngIf="permisos.aplicarDescuento">
+          <mat-icon>percent</mat-icon>
+        </button>
+        <!-- Merma: Dueño, Gerente y Almacenista -->
+        <button class="action-icon merma" title="Registrar Merma" (click)="openMermaModal(p)" *ngIf="permisos.registrarMerma">
+          <mat-icon>delete_sweep</mat-icon>
+        </button>
+        <!-- Editar: Dueño, Gerente y Almacenista -->
+        <button class="action-icon edit" title="Editar Producto" (click)="editProduct(p)" *ngIf="permisos.editarProducto">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </div>
+
+      <!-- Botón desactivar/activar - solo Dueño y Gerente -->
+      <button 
+        *ngIf="permisos.eliminarProducto"
+        class="toggle-active-btn" 
+        [class.is-inactive]="p.activo === false"
+        title="{{ p.activo === false ? 'Activar producto' : 'Ocultar producto' }}"
+        (click)="toggleActivoProduct(p)"
+      >
+        <mat-icon>{{ p.activo === false ? 'visibility' : 'visibility_off' }}</mat-icon>
+      </button>
+    </div>
+    
+    <div *ngIf="filteredProducts.length === 0" class="empty-state">
+      <mat-icon>inventory_2</mat-icon>
+      <p>No hay productos que coincidan con la búsqueda.</p>
+    </div>
+  </div>
+
+  <!-- PANEL DE FILTROS -->
+  <aside class="inventory-filters-panel" [class.open]="showFilters">
+    <div class="filters-header">
+      <span>Filtros avanzados</span>
+      <button class="close-filters" (click)="showFilters = false">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="filters-section">
+      <div class="filter-group">
+        <div class="filter-title">Categorías</div>
+        <label *ngFor="let cat of categoriesList">
+          <input 
+            type="checkbox" 
+            [checked]="filterCategories.includes(cat)" 
+            (change)="toggleCategory(cat, $event)" 
+          />
+          <span>{{cat}}</span>
+        </label>
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-checkbox">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="filterLowStock" 
+            (change)="onFilterChange()" 
+          />
+          <mat-icon>warning</mat-icon>
+          <span>Solo stock bajo</span>
+        </label>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- MODAL: AGREGAR MERMA -->
+<div *ngIf="showMerma" class="modal-overlay" (click)="closeMermaModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Agregar Merma</h2>
+      <button class="close-btn" (click)="closeMermaModal()">✖</button>
+    </div>
+    <div class="product-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Producto</label>
+          <input type="text" [value]="mermaTarget?.nombre || mermaTarget?.name" disabled>
+        </div>
+        <div class="form-group">
+          <label>Stock actual</label>
+          <input type="text" [value]="(mermaTarget?.stock || mermaTarget?.cantidadDisponible || 0)" disabled>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="mermaCantidad">Cantidad a descontar *</label>
+          <input id="mermaCantidad" type="number" [(ngModel)]="mermaCantidad" min="1">
+        </div>
+        <div class="form-group">
+          <label for="mermaMotivo">Motivo</label>
+          <input id="mermaMotivo" type="text" [(ngModel)]="mermaMotivo" placeholder="Rotura, caducidad...">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn secondary" (click)="closeMermaModal()">Cancelar</button>
+        <button class="btn primary" (click)="confirmMerma()" [disabled]="!mermaCantidad || mermaCantidad <= 0">Aplicar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GESTIONAR DESCUENTO -->
+<div *ngIf="showDescuento" class="modal-overlay" (click)="cerrarModalDescuento()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Gestionar Descuento</h2>
+      <button class="close-btn" (click)="cerrarModalDescuento()">✖</button>
+    </div>
+    <form [formGroup]="descuentoForm" class="product-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Producto</label>
+          <input type="text" [value]="descuentoTarget?.nombre || descuentoTarget?.name" disabled>
+        </div>
+        <div class="form-group">
+          <label>Precio actual</label>
+          <input type="text" [value]="'$' + (descuentoTarget?.precioVenta || descuentoTarget?.price || 0)" disabled>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="porcentaje">Porcentaje de descuento (%) *</label>
+          <input 
+            id="porcentaje" 
+            type="number" 
+            formControlName="porcentaje" 
+            placeholder="Ej: 15.5" 
+            min="0" 
+            max="100"
+            step="0.1">
+          <small style="color:#6b7280;font-size:0.85rem;">Entre 0 y 100</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fechaInicio">Fecha inicio (opcional)</label>
+          <input 
+            id="fechaInicio" 
+            type="date" 
+            formControlName="fechaInicio">
+        </div>
+        <div class="form-group">
+          <label for="fechaFin">Fecha fin (opcional)</label>
+          <input 
+            id="fechaFin" 
+            type="date" 
+            formControlName="fechaFin">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="horaInicio">Hora inicio (opcional)</label>
+          <input 
+            id="horaInicio" 
+            type="time" 
+            formControlName="horaInicio">
+        </div>
+        <div class="form-group">
+          <label for="horaFin">Hora fin (opcional)</label>
+          <input 
+            id="horaFin" 
+            type="time" 
+            formControlName="horaFin">
+        </div>
+      </div>
+
+      <!-- Vista previa del descuento -->
+      <div class="form-summary" *ngIf="descuentoForm.value.porcentaje && descuentoForm.value.porcentaje > 0">
+        <h3>Vista Previa</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">Precio original:</span>
+            <span class="summary-value">${{descuentoTarget?.precioVenta || descuentoTarget?.price || 0 | number:'1.2-2'}}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Descuento:</span>
+            <span class="summary-value negative">-${{((descuentoTarget?.precioVenta || descuentoTarget?.price || 0) * descuentoForm.value.porcentaje / 100) | number:'1.2-2'}}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Precio final:</span>
+            <span class="summary-value success">${{((descuentoTarget?.precioVenta || descuentoTarget?.price || 0) * (1 - descuentoForm.value.porcentaje / 100)) | number:'1.2-2'}}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn secondary" (click)="cerrarModalDescuento()">Cancelar</button>
+        <button type="button" class="btn danger" (click)="removerDescuento()" *ngIf="descuentoTarget?.descuentoPorcentaje">
+          Quitar Descuento
+        </button>
+        <button type="button" class="btn primary" (click)="aplicarDescuento()">
+          Aplicar Descuento
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: REABASTECER PRODUCTO -->
+<div *ngIf="showReabastecer" class="modal-overlay" (click)="cerrarModalReabastecer()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>🔄 Reabastecer Producto</h2>
+      <button class="close-btn" (click)="cerrarModalReabastecer()">✖</button>
+    </div>
+    <form [formGroup]="reabastecerForm" class="product-form">
+      <!-- Info del producto (pre-llenada) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Producto</label>
+          <input type="text" [value]="reabastecerTarget?.nombre || reabastecerTarget?.name" disabled>
+        </div>
+        <div class="form-group">
+          <label>Categoría</label>
+          <input type="text" [value]="reabastecerTarget?.categoria || reabastecerTarget?.category || 'Sin categoría'" disabled>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Código de Barras</label>
+          <input type="text" [value]="reabastecerTarget?.codigoBarras || 'N/A'" disabled>
+        </div>
+        <div class="form-group">
+          <label>Stock actual</label>
+          <input type="text" [value]="(reabastecerTarget?.stock || reabastecerTarget?.cantidadDisponible || 0)" disabled>
+        </div>
+      </div>
+
+      <hr style="margin: 1rem 0; border: none; border-top: 1px solid #e5e7eb;">
+
+      <!-- Precios editables -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="precioCompra">Precio de Compra (por unidad) *</label>
+          <input 
+            id="precioCompra" 
+            type="number" 
+            formControlName="precioCompra" 
+            min="0" 
+            step="0.01"
+            placeholder="0.00"
+            required>
+          <small style="color:#6b7280;font-size:0.85rem;">Puede cambiar al reabastecer</small>
+        </div>
+
+        <div class="form-group">
+          <label for="precioVenta">Precio de Venta (por unidad) *</label>
+          <input 
+            id="precioVenta" 
+            type="number" 
+            formControlName="precioVenta" 
+            min="0" 
+            step="0.01"
+            placeholder="0.00"
+            required>
+        </div>
+      </div>
+
+      <!-- Cantidades -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cantidadComprada">Cantidad Comprada/Inicial *</label>
+          <input 
+            id="cantidadComprada" 
+            type="number" 
+            formControlName="cantidadComprada" 
+            min="0"
+            placeholder="0"
+            required>
+          <small style="color:#6b7280;font-size:0.85rem;">Unidades que vas a agregar al stock</small>
+        </div>
+
+        <div class="form-group">
+          <label for="merma">Merma (Defectuosos/Pérdida)</label>
+          <input 
+            id="merma" 
+            type="number" 
+            formControlName="merma" 
+            min="0"
+            placeholder="0">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="stockMinimo">Stock Mínimo (Alerta) *</label>
+          <input 
+            id="stockMinimo" 
+            type="number" 
+            formControlName="stockMinimo" 
+            min="1"
+            placeholder="5"
+            required>
+          <small style="color:#6b7280;font-size:0.85rem;">Se alertará cuando baje de este número</small>
+        </div>
+      </div>
+
+      <!-- RESUMEN DEL REABASTECIMIENTO -->
+      <div class="form-summary">
+        <h3>📊 Resumen del Reabastecimiento</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">Stock actual:</span>
+            <span class="summary-value">{{ reabastecerTarget?.stock || reabastecerTarget?.cantidadDisponible || 0 }} unidades</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Cantidad comprada:</span>
+            <span class="summary-value">+{{ reabastecerForm.value.cantidadComprada || 0 }} unidades</span>
+          </div>
+          <div class="summary-item" *ngIf="reabastecerForm.value.merma > 0">
+            <span class="summary-label">Merma:</span>
+            <span class="summary-value negative">-{{ reabastecerForm.value.merma }} unidades</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Stock nuevo:</span>
+            <span class="summary-value success"><strong>{{ stockNuevo }} unidades</strong></span>
+          </div>
+        </div>
+
+        <div class="summary-grid" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+          <div class="summary-item">
+            <span class="summary-label">Costo de reabastecimiento:</span>
+            <span class="summary-value">${{ costoReabastecimiento | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Ganancia por unidad:</span>
+            <span class="summary-value" [class.negative]="nuevaGananciaUnitaria < 0">
+              ${{ nuevaGananciaUnitaria | number:'1.2-2' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn secondary" (click)="cerrarModalReabastecer()">Cancelar</button>
+        <button 
+          type="button" 
+          class="btn primary" 
+          (click)="confirmarReabastecer()"
+          [disabled]="!reabastecerForm.value.cantidadComprada || reabastecerForm.value.cantidadComprada <= 0">
+          💰 Confirmar Reabastecimiento
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

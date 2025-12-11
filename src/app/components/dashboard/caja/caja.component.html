@@ -1,0 +1,305 @@
+<div class="caja-container">
+  <!-- Header -->
+  <div class="caja-header">
+    <div class="header-content">
+      <div class="header-icon">💰</div>
+      <div class="header-text">
+        <h2>Gestión de Caja</h2>
+        <p>Controla el flujo de efectivo de tu negocio</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="caja-content">
+    @if (current) {
+      <!-- Caja Abierta -->
+      <div class="status-card open">
+        <div class="status-badge">
+          <span class="badge-dot"></span>
+          <span class="badge-text">Caja Abierta</span>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📥</div>
+            <div class="stat-content">
+              <span class="stat-label">Monto Inicial</span>
+              <span class="stat-value">${{ current.montoInicial | number:'1.2-2' }}</span>
+            </div>
+          </div>
+          
+          <div class="stat-card highlight">
+            <div class="stat-icon">💵</div>
+            <div class="stat-content">
+              <span class="stat-label">Saldo Actual</span>
+              <span class="stat-value primary">${{ (current.montoActual ?? current.saldoActual ?? 0) | number:'1.2-2' }}</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+              <span class="stat-label">Fecha de Apertura</span>
+              <span class="stat-value small">{{ current.fechaApertura | date:'dd/MM/yy, h:mm a' }}</span>
+            </div>
+          </div>
+          
+          @if (current.fechaCierre) {
+          <div class="stat-card">
+            <div class="stat-icon">🔒</div>
+            <div class="stat-content">
+              <span class="stat-label">Fecha de Cierre</span>
+              <span class="stat-value small">{{ current.fechaCierre | date:'dd/MM/yy, h:mm a' }}</span>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- Botones de Movimientos -->
+        <div class="action-buttons">
+          <button class="btn btn-success-outline" (click)="abrirModal('entrada')">
+            <span class="btn-icon">➕</span>
+            <span>Registrar Ingreso</span>
+          </button>
+          <button class="btn btn-danger-outline" (click)="abrirModal('salida')">
+            <span class="btn-icon">➖</span>
+            <span>Registrar Gasto</span>
+          </button>
+        </div>
+
+        <!-- Resumen de Movimientos -->
+        @if (resumen) {
+        <div class="resumen-section">
+          <h3>📊 Resumen del Día</h3>
+          <div class="resumen-grid">
+            <div class="resumen-card success">
+              <div class="resumen-icon">📈</div>
+              <div class="resumen-content">
+                <span class="resumen-label">Total Entradas</span>
+                <span class="resumen-value">+${{ resumen.totalEntradas | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="resumen-card danger">
+              <div class="resumen-icon">📉</div>
+              <div class="resumen-content">
+                <span class="resumen-label">Total Salidas</span>
+                <span class="resumen-value">-${{ resumen.totalSalidas | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            <div class="resumen-card primary">
+              <div class="resumen-icon">💎</div>
+              <div class="resumen-content">
+                <span class="resumen-label">Ganancia Real</span>
+                <span class="resumen-value">${{ resumen.gananciaReal | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- Tabla de Movimientos -->
+        @if (movimientos.length > 0) {
+        <div class="movimientos-section">
+          <h3>📋 Movimientos del Día</h3>
+          <div class="table-container">
+            <table class="movimientos-table">
+              <thead>
+                <tr>
+                  <th>Fecha/Hora</th>
+                  <th>Tipo</th>
+                  <th>Categoría</th>
+                  <th>Descripción</th>
+                  <th>Método</th>
+                  <th>Monto</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (mov of movimientos; track mov.id) {
+                <tr>
+                  <td>{{ mov.fechaHora | date:'dd/MM/yy HH:mm' }}</td>
+                  <td>
+                    <span class="mov-badge" [class.entrada]="mov.tipo === 'entrada'" [class.salida]="mov.tipo === 'salida'">
+                      {{ mov.tipo === 'entrada' ? '➕ Entrada' : '➖ Salida' }}
+                    </span>
+                  </td>
+                  <td>{{ mov.categoria }}</td>
+                  <td>{{ mov.descripcion || '-' }}</td>
+                  <td>{{ mov.metodoPago }}</td>
+                  <td [class.text-success]="mov.tipo === 'entrada'" [class.text-danger]="mov.tipo === 'salida'">
+                    {{ mov.tipo === 'entrada' ? '+' : '-' }}${{ mov.monto | number:'1.2-2' }}
+                  </td>
+                  <td class="saldo-col">${{ mov.saldoDespues | number:'1.2-2' }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        }
+
+        <!-- Cierre de Caja -->
+        <div class="action-section">
+          <h3>Cerrar Caja del Día</h3>
+          <p class="section-description">Ingresa el monto de cierre para finalizar las operaciones</p>
+          
+          <div class="input-group">
+            <label for="closingAmount">
+              <span class="label-icon">💰</span>
+              Monto de Cierre
+            </label>
+            <input 
+              id="closingAmount" 
+              type="number" 
+              [(ngModel)]="closingAmount"
+              placeholder="0.00"
+              class="amount-input" />
+          </div>
+          
+          <button 
+            class="btn btn-close" 
+            (click)="closeCaja()" 
+            [disabled]="loading">
+            <span class="btn-icon">🔒</span>
+            <span>{{ loading ? 'Cerrando...' : 'Cerrar Caja' }}</span>
+          </button>
+        </div>
+      </div>
+    } @else {
+      <!-- Caja Cerrada -->
+      <div class="status-card closed">
+        <div class="status-badge closed">
+          <span class="badge-dot"></span>
+          <span class="badge-text">Caja Cerrada</span>
+        </div>
+        
+        <div class="empty-state">
+          <div class="empty-icon">🔐</div>
+          <h3>La caja está cerrada</h3>
+          <p>Abre la caja para comenzar a registrar ventas y movimientos</p>
+        </div>
+
+        <!-- Apertura de Caja -->
+        <div class="action-section">
+          <h3>Abrir Caja</h3>
+          <p class="section-description">Define el monto inicial con el que comenzarás el día</p>
+          
+          <div class="input-group">
+            <label for="openingAmount">
+              <span class="label-icon">💵</span>
+              Monto Inicial
+            </label>
+            <input 
+              id="openingAmount" 
+              type="number" 
+              [(ngModel)]="openingAmount"
+              placeholder="0.00"
+              class="amount-input" />
+          </div>
+          
+          <button 
+            class="btn btn-open" 
+            (click)="openCaja()" 
+            [disabled]="loading">
+            <span class="btn-icon">🚀</span>
+            <span>{{ loading ? 'Abriendo...' : 'Abrir Caja' }}</span>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <a routerLink="/dashboard/pos" class="action-card primary">
+        <div class="action-icon">🛒</div>
+        <div class="action-content">
+          <h4>Punto de Venta</h4>
+          <p>Realizar ventas</p>
+        </div>
+        <div class="action-arrow">→</div>
+      </a>
+      
+      <a routerLink="/dashboard/reports" class="action-card">
+        <div class="action-icon">📊</div>
+        <div class="action-content">
+          <h4>Reportes</h4>
+          <p>Ver estadísticas</p>
+        </div>
+        <div class="action-arrow">→</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Movimientos -->
+@if (showModal) {
+<div class="modal-overlay" (click)="cerrarModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ tipoMovimiento === 'entrada' ? '➕ Registrar Ingreso' : '➖ Registrar Gasto' }}</h3>
+      <button class="modal-close" (click)="cerrarModal()">✕</button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="monto">Monto *</label>
+        <input 
+          id="monto" 
+          type="number" 
+          [(ngModel)]="monto" 
+          placeholder="0.00" 
+          min="0" 
+          step="0.01"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="categoria">Categoría *</label>
+        <select id="categoria" [(ngModel)]="categoria" class="form-select">
+          <option value="">Selecciona una categoría</option>
+          @for (cat of categorias; track cat) {
+          <option [value]="cat">{{ cat }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <textarea 
+          id="descripcion" 
+          [(ngModel)]="descripcion" 
+          rows="3" 
+          placeholder="Descripción detallada del movimiento"
+          class="form-textarea"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="metodoPago">Método de Pago</label>
+        <select id="metodoPago" [(ngModel)]="metodoPago" class="form-select">
+          @for (metodo of metodosPago; track metodo) {
+          <option [value]="metodo">{{ metodo }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="referencia">Referencia/Comprobante</label>
+        <input 
+          id="referencia" 
+          type="text" 
+          [(ngModel)]="referencia" 
+          placeholder="Ej: RECIBO-001"
+          class="form-input">
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrarModal()" [disabled]="loadingMovimiento">Cancelar</button>
+      <button class="btn btn-primary" (click)="registrarMovimiento()" [disabled]="loadingMovimiento">
+        {{ loadingMovimiento ? 'Registrando...' : 'Registrar' }}
+      </button>
+    </div>
+  </div>
+</div>
+}

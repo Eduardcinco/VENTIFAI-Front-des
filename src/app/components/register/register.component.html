@@ -1,0 +1,94 @@
+<div class="auth-container">
+  <div class="auth-wrapper">
+    <!-- Sidebar/Branding -->
+    <div class="auth-side">
+      <div class="auth-branding">
+        <svg class="brand-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 10h22M8 6h16M6 14h20v12a2 2 0 01-2 2H8a2 2 0 01-2-2V14z"/>
+        </svg>
+        <h1>Ventify</h1>
+        <p>Gestión de inventario y ventas para tu negocio</p>
+      </div>
+    </div>
+
+    <!-- Register Form -->
+    <div class="auth-form-wrapper">
+      <div class="auth-card">
+        <h2>Crear cuenta nueva</h2>
+        <p class="subtitle">Registra tu negocio para comenzar a usar nuestro sistema de gestión</p>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="error-alert">
+          {{ errorMessage }}
+        </div>
+
+        <form class="auth-form" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label for="businessName">Nombre del negocio</label>
+            <input 
+              id="businessName"
+              type="text" 
+              placeholder="Ej: Tienda María - Zona 030"
+              [(ngModel)]="formData.businessName"
+              name="businessName"
+              class="form-input"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="ownerName">Tu nombre</label>
+            <input 
+              id="ownerName"
+              type="text" 
+              placeholder="Ej: María González"
+              [(ngModel)]="formData.name"
+              name="name"
+              class="form-input"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="email">Correo electrónico</label>
+            <input 
+              id="email"
+              type="email" 
+              placeholder="tu@correo.com"
+              [(ngModel)]="formData.email"
+              name="email"
+              class="form-input"
+            >
+            <div *ngIf="errorMessage" class="error-msg">{{ errorMessage }}</div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input 
+              id="password"
+              type="password" 
+              placeholder="••••••••"
+              [(ngModel)]="formData.password"
+              name="password"
+              class="form-input"
+            >
+            <span class="hint">Mínimo 6 caracteres</span>
+          </div>
+
+          <button type="submit" class="btn primary big" [disabled]="loading">
+            {{ loading ? 'Creando cuenta...' : 'Crear Cuenta Gratis' }}
+          </button>
+        </form>
+
+        <div class="auth-divider">o</div>
+
+        <div class="auth-footer">
+          <p>¿Ya tienes cuenta?</p>
+          <a routerLink="/login" class="btn secondary big">Iniciar Sesión</a>
+        </div>
+
+        <p class="terms">
+          Al registrarte, aceptas nuestros términos de servicio y política de privacidad.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

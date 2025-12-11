@@ -1,0 +1,52 @@
+<div class="dashboard-root" [class.sidebar-closed]="!(sidebarService.isOpen$ | async)">
+  <app-sidebar [user]="currentUser" [getUserInitials]="getUserInitials" [logout]="logout.bind(this)"></app-sidebar>
+
+  <main class="main-area" [class.expanded]="!(sidebarService.isOpen$ | async)">
+    <header class="topbar">
+      <button class="hamburger" (click)="toggleSidebar()" aria-label="Abrir/cerrar menú">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <div class="page-title">Ventify</div>
+      <div class="user-profile-mini" *ngIf="currentUser">
+        <img *ngIf="fotoPerfilUrl" [src]="fotoPerfilUrl" alt="Avatar" class="avatar-circle">
+        <span *ngIf="!fotoPerfilUrl" class="avatar-default">{{ getUserInitials() }}</span>
+        <div class="user-info">
+          <span class="username-mini">{{ getUserDisplayName() }}</span>
+          <span class="role-badge" [class.dueno]="isDueno()" [class.empleado]="!isDueno()">{{ getRoleLabel() }}</span>
+        </div>
+      </div>
+      <div class="caja-status" *ngIf="cajaState.abierta; else cajaCerrada">
+        <small>💼 Caja abierta · Saldo: {{ cajaState.caja?.montoActual | currency:'MXN' }}</small>
+        <small *ngIf="cajaState.caja?.abiertaPor" class="audit-info">
+          · Abierta por: {{ cajaState.caja?.abiertaPor }}
+        </small>
+      </div>
+      <ng-template #cajaCerrada>
+        <small class="caja-status closed">⚠️ Caja cerrada</small>
+      </ng-template>
+      <div class="server-clock" *ngIf="serverTime">
+        <span>🕒 Server • {{ serverTime | date:'shortTime' }}</span>
+      </div>
+      <div class="stock-alert" *ngIf="stockBajoList.length > 0" title="Ver productos">
+        <span [routerLink]="['/dashboard/inventory']" style="cursor: pointer;">
+          🔔 {{ stockBajoList.length }} producto{{ stockBajoList.length > 1 ? 's' : '' }} con stock bajo
+        </span>
+        <button 
+          (click)="silenciarAlertas()" 
+          class="btn-silenciar" 
+          title="Desactivar alertas emergentes"
+          style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.8rem; background: rgba(255,255,255,0.2); border: none; border-radius: 0.25rem; cursor: pointer; color: inherit;">
+          🔕
+        </button>
+      </div>
+    </header>
+
+    <section class="main-content">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+
+  <div class="sidebar-backdrop" [class.visible]="(sidebarService.isOpen$ | async)" (click)="toggleSidebar()"></div>
+</div>

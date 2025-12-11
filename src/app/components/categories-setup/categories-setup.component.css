@@ -1,0 +1,5 @@
+.categories-setup { max-width:900px; margin:20px auto }
+.categories-setup .new { display:flex; gap:8px; margin-bottom:12px }
+.categories-setup .list { display:grid; grid-template-columns: repeat(2, 1fr); gap:6px }
+.categories-setup .cat-row { padding:6px; border-bottom:1px solid #eee }
+.categories-setup .actions { margin-top:12px }

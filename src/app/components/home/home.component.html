@@ -1,0 +1,90 @@
+<!-- Hero Section -->
+<section class="home-hero">
+  <header class="hero-top">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 10h22M8 6h16M6 14h20v12a2 2 0 01-2 2H8a2 2 0 01-2-2V14z"/>
+      </svg>
+      Ventify
+    </div>
+    <nav class="hero-actions">
+      <a routerLink="/login" class="btn ghost">Iniciar Sesión</a>
+      <a routerLink="/register" class="btn primary">Registrarse Gratis</a>
+    </nav>
+  </header>
+
+  <div class="hero-content">
+    <h1>{{ greeting }}, <span class="accent">{{ displayName }}</span></h1>
+    <p class="lead">Sistema completo de inventario y punto de venta diseñado especialmente para comerciantes del mercado "Zona 030" y pequeños negocios.</p>
+    <div class="hero-cta">
+      <a routerLink="/register" class="btn primary big">Comenzar Gratis</a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Section -->
+<section class="preview">
+  <h2 class="section-title">Vista previa del sistema</h2>
+  <p class="section-subtitle">Así es cómo verán las estadísticas de tu negocio</p>
+  
+  <div class="stats">
+    <div class="card" *ngFor="let s of stats">
+      <div class="card-icon">📊</div>
+      <div class="value">{{ s.value }}</div>
+      <div class="label">{{ s.label }}</div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+  <h2 class="section-title">Todo lo que necesitas para tu negocio</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📦</div>
+      <h3>Inventario</h3>
+      <p>Gestiona productos, categorías y stock de forma sencilla</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛒</div>
+      <h3>Punto de Venta</h3>
+      <p>Procesa ventas rápidamente con cálculo automático</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📈</div>
+      <h3>Reportes</h3>
+      <p>Visualiza el rendimiento de tu negocio con gráficas</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚙️</div>
+      <h3>Configuración</h3>
+      <p>Personaliza el sistema según las necesidades de tu negocio</p>
+    </div>
+  </div>
+</section>
+
+<!-- Inventory Demo Section -->
+<section class="preview">
+  <h2 class="section-title">Productos en Inventario (Demo)</h2>
+  <p class="section-subtitle">Ejemplo de cómo se gestionan los productos en el sistema</p>
+   
+  <div class="inventory-demo">
+    <div class="product" *ngFor="let p of products">
+      <div class="product-left">
+        <div class="product-icon">👕</div>
+        <div>
+          <div class="product-name">{{ p.name }}</div>
+          <div class="product-meta">{{ p.category }} · Stock: {{ p.stock }}</div>
+        </div>
+      </div>
+      <div class="product-right">{{ p.price }}</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <h2>¿Listo para modernizar tu negocio?</h2>
+  <p>Únete a cientos de comerciantes que ya están usando Ventify</p>
+  <a routerLink="/register" class="btn primary big">Comenzar Ahora - Es Gratis</a>
+</section>

@@ -1,0 +1,620 @@
+<div class="settings-container">
+  <div class="settings-header">
+    <h1>⚙️ Configuración</h1>
+    <p>{{ permisos.verUsuarios ? 'Personaliza tu negocio, gestiona empleados y controla tu cuenta' : 'Personaliza tu experiencia y gestiona tu cuenta' }}</p>
+  </div>
+
+  <!-- TABS NAVEGACIÓN -->
+  <div class="tabs-nav">
+    <!-- Tabs disponibles para TODOS -->
+    <button class="tab-btn" [class.active]="activeTab === 'cuenta'" (click)="setTab('cuenta')">
+      👤 Mi Perfil
+    </button>
+    
+    <!-- Tabs solo para Dueño/Gerente -->
+    <button class="tab-btn" [class.active]="activeTab === 'negocio'" (click)="setTab('negocio')" *ngIf="permisos.editarConfiguracion">
+      🏢 Mi Negocio
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'empleados'" (click)="setTab('empleados')" *ngIf="permisos.verUsuarios">
+      👥 Empleados
+    </button>
+  </div>
+
+  <!-- TAB 1: DATOS DEL NEGOCIO - Solo Dueño/Gerente -->
+  <div class="tab-content" *ngIf="activeTab === 'negocio' && permisos.editarConfiguracion">
+    <div class="settings-card">
+      <h2>🏢 Datos del Negocio</h2>
+      <p class="subtitle">Información fiscal y comercial</p>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label for="nombreNegocio">Nombre del Negocio *</label>
+          <input 
+            type="text" 
+            id="nombreNegocio" 
+            [(ngModel)]="negocio.nombre" 
+            placeholder="Mi Tienda S.A. de C.V."
+            [readonly]="!permisos.editarNombreNegocio"
+            [class.readonly]="!permisos.editarNombreNegocio"
+          >
+          <small *ngIf="!permisos.editarNombreNegocio" class="hint-warning">
+            🔒 Solo el dueño puede modificar el nombre del negocio
+          </small>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="direccion">Dirección Completa *</label>
+          <input type="text" id="direccion" [(ngModel)]="negocio.direccion" placeholder="Calle #123, Col. Centro, CP 12345">
+        </div>
+
+        <div class="form-group">
+          <label for="telefono">Teléfono *</label>
+          <input type="tel" id="telefono" [(ngModel)]="negocio.telefono" placeholder="5512345678">
+        </div>
+
+        <div class="form-group">
+          <label for="correo">Correo Electrónico *</label>
+          <input type="email" id="correo" [(ngModel)]="negocio.correo" placeholder="contacto@negocio.com">
+        </div>
+
+        <div class="form-group">
+          <label for="rfc">RFC</label>
+          <input type="text" id="rfc" [(ngModel)]="negocio.rfc" placeholder="XAXX010101000" maxlength="13">
+          <small>Registro Federal de Contribuyentes</small>
+        </div>
+
+        <div class="form-group">
+          <label for="giro">Giro Comercial</label>
+          <select id="giro" [(ngModel)]="negocio.giroComercial">
+            <option value="">Seleccionar...</option>
+            <option value="Abarrotes">Abarrotes</option>
+            <option value="Ferretería">Ferretería</option>
+            <option value="Papelería">Papelería</option>
+            <option value="Ropa">Ropa y Accesorios</option>
+            <option value="Alimentos">Alimentos y Bebidas</option>
+            <option value="Electrónica">Electrónica</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn primary" (click)="saveNegocio()">💾 Guardar Datos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: MI CUENTA -->
+  <div class="tab-content" *ngIf="activeTab === 'cuenta'">
+    <div class="settings-card">
+      <h2>🔒 Cambiar Contraseña</h2>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label for="passwordActual">Contraseña Actual *</label>
+          <input type="password" id="passwordActual" [(ngModel)]="cuenta.passwordActual" placeholder="••••••••">
+        </div>
+
+        <div class="form-group">
+          <label for="passwordNueva">Nueva Contraseña *</label>
+          <input type="password" id="passwordNueva" [(ngModel)]="cuenta.passwordNueva" placeholder="••••••••">
+        </div>
+
+        <div class="form-group">
+          <label for="passwordConfirm">Confirmar Nueva *</label>
+          <input type="password" id="passwordConfirm" [(ngModel)]="cuenta.passwordConfirm" placeholder="••••••••">
+        </div>
+      </div>
+
+      <button class="btn primary" (click)="changePassword()">🔐 Actualizar Contraseña</button>
+    </div>
+
+    <div class="settings-card">
+      <h2>📧 Cambiar Correo Electrónico</h2>
+      <div class="form-group">
+        <label for="nuevoCorreo">Nuevo Correo *</label>
+        <input type="email" id="nuevoCorreo" [(ngModel)]="cuenta.nuevoCorreo" placeholder="nuevo@correo.com">
+      </div>
+
+      <button class="btn primary" (click)="changeEmail()">✉️ Actualizar Correo</button>
+    </div>
+
+    <div class="settings-card">
+      <h2>📷 Foto de Perfil</h2>
+      <div class="form-group">
+        <label for="fotoPerfil">Selecciona una imagen</label>
+        <input type="file" id="fotoPerfil" accept="image/*" (change)="onFileSelected($event)">
+      </div>
+      <div class="foto-preview" *ngIf="fotoPerfilUrl">
+        <img [src]="fotoPerfilUrl" alt="Foto de perfil" />
+        <small>Vista previa desde servidor</small>
+        <button class="btn secondary" (click)="deleteProfilePhoto()">🗑️ Eliminar foto</button>
+      </div>
+    </div>
+
+    <div class="settings-card danger-zone">
+      <h2>⚠️ Zona de Seguridad</h2>
+      <p>Cierra todas las sesiones activas en otros dispositivos</p>
+      <button class="btn danger" (click)="cerrarSesiones()">🚪 Cerrar Todas las Sesiones</button>
+    </div>
+  </div>
+
+  <!-- TAB 4: EMPLEADOS - Solo Dueño/Gerente -->
+  <div class="tab-content" *ngIf="activeTab === 'empleados' && permisos.verUsuarios">
+    <div class="action-card" (click)="toggleFormEmpleado()" [class.active]="mostrarFormEmpleado">
+      <div class="action-icon">👤➕</div>
+      <div class="action-content">
+        <h3>Agregar Nuevo Empleado</h3>
+        <p>Crea un usuario empleado con acceso limitado</p>
+      </div>
+      <div class="action-arrow">{{ mostrarFormEmpleado ? '▲' : '▼' }}</div>
+    </div>
+
+    <div class="expandable-form" *ngIf="mostrarFormEmpleado">
+      <div class="settings-card">
+        <h2>📝 Datos del Nuevo Empleado</h2>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="empNombre">Nombre(s) *</label>
+            <input type="text" id="empNombre" [(ngModel)]="employee.Nombre" placeholder="Juan">
+          </div>
+
+          <div class="form-group">
+            <label for="empApellido1">Apellido Paterno *</label>
+            <input type="text" id="empApellido1" [(ngModel)]="employee.Apellido1" placeholder="Pérez">
+          </div>
+
+          <div class="form-group">
+            <label for="empApellido2">Apellido Materno</label>
+            <input type="text" id="empApellido2" [(ngModel)]="employee.Apellido2" placeholder="García">
+          </div>
+
+          <div class="form-group">
+            <label for="empTelefono">Teléfono (10 dígitos) *</label>
+            <input type="tel" id="empTelefono" [(ngModel)]="employee.Telefono" placeholder="5512345678" maxlength="10">
+          </div>
+
+          <div class="form-group">
+            <label for="empRFC">RFC (Persona Física) *</label>
+            <input type="text" id="empRFC" [(ngModel)]="employee.RFC" placeholder="PEPJ900101XXX" maxlength="13">
+            <small>Formato: 4 letras + 6 números + 3 caracteres</small>
+          </div>
+
+          <div class="form-group">
+            <label for="empNSS">Número de Seguro Social</label>
+            <input type="text" id="empNSS" [(ngModel)]="employee.NumeroSeguroSocial" placeholder="12345678901" maxlength="11">
+          </div>
+
+          <div class="form-group">
+            <label for="empPuesto">Puesto</label>
+            <select id="empPuesto" [(ngModel)]="employee.Puesto">
+              <option value="Gerente de negocio">Gerente de negocio</option>
+              <option value="Cajero">Cajero</option>
+              <option value="Vendedor">Vendedor</option>
+              <option value="Almacenista">Almacenista</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="empSueldo">Sueldo Diario</label>
+            <input type="number" id="empSueldo" [(ngModel)]="employee.SueldoDiario" placeholder="250.00" step="0.01">
+          </div>
+
+          <div class="form-group">
+            <label for="empFechaIngreso">Fecha de Ingreso</label>
+            <input type="date" id="empFechaIngreso" [(ngModel)]="employee.FechaIngreso">
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button class="btn primary" (click)="createEmployee()" [disabled]="creating">
+            {{ creating ? '⏳ Creando...' : '✅ Crear Empleado' }}
+          </button>
+          <button class="btn secondary" (click)="toggleFormEmpleado()">❌ Cancelar</button>
+        </div>
+
+        <div class="credentials-box" *ngIf="createdCreds?.correo">
+          <h3>🔑 Credenciales Generadas</h3>
+          <p><strong>Correo:</strong> <code>{{ createdCreds?.correo }}</code></p>
+          <p><strong>Contraseña:</strong> <code>{{ createdCreds?.password }}</code></p>
+          <small>⚠️ Guarda estas credenciales ahora. No se mostrarán de nuevo.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🆕 BANNER DE CONTRASEÑA TEMPORAL CON TIMER -->
+    <div class="password-temporal-alert" *ngIf="passwordTemporal && empleadoCreado">
+      <div class="alert-header">
+        <h3>⏰ Credenciales Temporales</h3>
+        <div class="timer-badge" [class.warning]="tiempoRestante <= 10">
+          {{ tiempoRestante }}s
+        </div>
+      </div>
+      
+      <div class="alert-content">
+        <div class="credential-row">
+          <span class="label">👤 Empleado:</span>
+          <span class="value">{{ empleadoCreado.nombre }} {{ empleadoCreado.apellido1 }}</span>
+        </div>
+        
+        <div class="credential-row">
+          <span class="label">📧 Correo:</span>
+          <span class="value code">{{ empleadoCreado.correo }}</span>
+        </div>
+        
+        <div class="credential-row">
+          <span class="label">🔑 Contraseña:</span>
+          <div class="password-display">
+            <span class="value code" [class.visible]="mostrarPassword">
+              {{ mostrarPassword ? passwordTemporal : '••••••••' }}
+            </span>
+            <button class="toggle-btn" (click)="mostrarPassword = !mostrarPassword" type="button">
+              {{ mostrarPassword ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="alert-warning">
+        <strong>📸 ¡IMPORTANTE!</strong> Fotografía o copia estas credenciales AHORA. 
+        Se ocultarán automáticamente en <strong>{{ tiempoRestante }}</strong> segundos por seguridad.
+      </div>
+      
+      <div class="alert-note">
+        💡 El empleado deberá cambiar esta contraseña obligatoriamente en su primer acceso.
+      </div>
+    </div>
+
+    <!-- 🆕 GRID DE EMPLEADOS (ESTILO INVENTARIO) -->
+    <div class="empleados-section">
+      <div class="section-header">
+        <h2>👥 Empleados</h2>
+        <span class="empleados-count">{{ empleados.length }} empleado(s)</span>
+      </div>
+
+      <!-- Grid de Cards -->
+      <div class="empleados-grid" *ngIf="empleadosFiltrados && empleadosFiltrados.length > 0">
+        <div 
+          class="empleado-card" 
+          *ngFor="let emp of empleadosFiltrados"
+          (click)="abrirModalEmpleado(emp)">
+          
+          <!-- Avatar -->
+          <div class="card-avatar" [class]="(emp.rol || 'empleado').toLowerCase()">
+            {{ getInitials(emp) }}
+          </div>
+          
+          <!-- Info principal -->
+          <div class="card-info">
+            <h3 class="card-name">{{ emp.nombre }} {{ emp.apellido1 }}</h3>
+            <p class="card-email">{{ emp.correo }}</p>
+          </div>
+          
+          <!-- Rol Badge -->
+          <div class="card-rol">
+            <span class="role-badge" [class]="(emp.rol || 'empleado').toLowerCase()">
+              {{ emp.rol || 'Empleado' }}
+            </span>
+            <span class="extras-indicator" *ngIf="countExtras(emp) > 0">
+              +{{ countExtras(emp) }}
+            </span>
+          </div>
+          
+          <!-- Hover hint -->
+          <div class="card-hover-hint">
+            <span>👆 Click para ver detalles</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado vacío -->
+      <div class="empty-state-card" *ngIf="!empleadosFiltrados || empleadosFiltrados.length === 0">
+        <div class="empty-icon">👥</div>
+        <h3>No hay empleados registrados</h3>
+        <p>Crea tu primer empleado usando el botón "Agregar Nuevo Empleado" de arriba</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🆕 MODAL: VER/EDITAR EMPLEADO -->
+<div class="modal-overlay" *ngIf="showModalEmpleado" (click)="cerrarModalEmpleado()">
+  <div class="modal-content modal-empleado-detalle" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>👤 Detalle de Empleado</h2>
+      <button class="close-btn" (click)="cerrarModalEmpleado()">✖</button>
+    </div>
+
+    <div class="modal-body" *ngIf="empleadoSeleccionado">
+      <!-- Header con avatar grande -->
+      <div class="empleado-header-grande">
+        <div class="avatar-grande" [class]="(empleadoSeleccionado.rol || 'empleado').toLowerCase()">
+          {{ getInitials(empleadoSeleccionado) }}
+        </div>
+        <div class="empleado-titulo">
+          <h2>{{ empleadoSeleccionado.nombre }} {{ empleadoSeleccionado.apellido1 }} {{ empleadoSeleccionado.apellido2 || '' }}</h2>
+          <p class="empleado-correo">{{ empleadoSeleccionado.correo }}</p>
+          <div class="empleado-rol-actual">
+            <span class="role-badge large" [class]="(empleadoSeleccionado.rol || 'empleado').toLowerCase()">
+              {{ empleadoSeleccionado.rol || 'Empleado' }}
+            </span>
+            <span class="extras-indicator" *ngIf="countExtras(empleadoSeleccionado) > 0">
+              +{{ countExtras(empleadoSeleccionado) }} módulos extra
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info del empleado -->
+      <div class="empleado-info-grid">
+        <div class="info-item">
+          <span class="info-label">📞 Teléfono</span>
+          <span class="info-value">{{ empleadoSeleccionado.telefono || 'No registrado' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">💰 Sueldo Diario</span>
+          <span class="info-value">{{ (empleadoSeleccionado.sueldoDiario || 0) | currency:'MXN' }}</span>
+        </div>
+        <div class="info-item" *ngIf="empleadoSeleccionado.rfc">
+          <span class="info-label">📋 RFC</span>
+          <span class="info-value">{{ empleadoSeleccionado.rfc }}</span>
+        </div>
+        <div class="info-item" *ngIf="empleadoSeleccionado.numeroSeguroSocial">
+          <span class="info-label">🏥 NSS</span>
+          <span class="info-value">{{ empleadoSeleccionado.numeroSeguroSocial }}</span>
+        </div>
+        <div class="info-item" *ngIf="empleadoSeleccionado.fechaIngreso">
+          <span class="info-label">📅 Fecha de Ingreso</span>
+          <span class="info-value">{{ empleadoSeleccionado.fechaIngreso | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="info-item" *ngIf="empleadoSeleccionado.puesto">
+          <span class="info-label">💼 Puesto</span>
+          <span class="info-value">{{ empleadoSeleccionado.puesto }}</span>
+        </div>
+      </div>
+
+      <!-- Módulos extra activos -->
+      <div class="modulos-extra-section" *ngIf="countExtras(empleadoSeleccionado) > 0">
+        <h4>⚡ Módulos Extra Asignados</h4>
+        <div class="extras-tags">
+          <span class="extra-tag" *ngFor="let m of empleadoSeleccionado.permisosExtra?.modulos">
+            {{ getModuloNombre(m) }}
+          </span>
+        </div>
+        <small *ngIf="empleadoSeleccionado.permisosExtra?.nota">
+          📝 {{ empleadoSeleccionado.permisosExtra?.nota }}
+        </small>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="acciones-empleado">
+        <button class="btn-accion rol" *ngIf="puedeEditarRol" (click)="cerrarModalEmpleado(); abrirModalPermisos(empleadoSeleccionado!)">
+          <span class="btn-icon-grande">🛡️</span>
+          <span class="btn-texto">Cambiar Rol</span>
+        </button>
+        <button class="btn-accion modulos" (click)="cerrarModalEmpleado(); abrirModalExtras(empleadoSeleccionado!)">
+          <span class="btn-icon-grande">➕</span>
+          <span class="btn-texto">Asignar Módulos</span>
+        </button>
+        <button class="btn-accion editar" (click)="cerrarModalEmpleado(); abrirModalEditarEmpleado(empleadoSeleccionado!)">
+          <span class="btn-icon-grande">✏️</span>
+          <span class="btn-texto">Editar Datos</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn secondary" (click)="cerrarModalEmpleado()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR DATOS DE EMPLEADO -->
+<div class="modal-overlay" *ngIf="showModalEditarEmpleado" (click)="cerrarModalEditarEmpleado()">
+  <div class="modal-content modal-editar-empleado" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>✏️ Editar Empleado</h2>
+      <button class="close-btn" (click)="cerrarModalEditarEmpleado()">✖</button>
+    </div>
+
+    <div class="modal-body" *ngIf="empleadoEditando">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre(s)</label>
+          <input type="text" [(ngModel)]="empleadoEditando.nombre" placeholder="Nombre">
+        </div>
+        <div class="form-group">
+          <label>Apellido Paterno</label>
+          <input type="text" [(ngModel)]="empleadoEditando.apellido1" placeholder="Apellido">
+        </div>
+        <div class="form-group">
+          <label>Apellido Materno</label>
+          <input type="text" [(ngModel)]="empleadoEditando.apellido2" placeholder="Apellido">
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="tel" [(ngModel)]="empleadoEditando.telefono" placeholder="5512345678" maxlength="10">
+        </div>
+        <div class="form-group">
+          <label>Sueldo Diario</label>
+          <input type="number" [(ngModel)]="empleadoEditando.sueldoDiario" step="0.01" placeholder="250.00">
+        </div>
+        <div class="form-group">
+          <label>RFC</label>
+          <input type="text" [(ngModel)]="empleadoEditando.rfc" placeholder="XXXX000000XXX" maxlength="13">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn secondary" (click)="cerrarModalEditarEmpleado()">Cancelar</button>
+      <button class="btn primary" (click)="guardarEmpleadoEditado()">💾 Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CAMBIAR ROL DE EMPLEADO -->
+<div class="modal-overlay" *ngIf="showModalPermisos" (click)="cerrarModalPermisos()">
+  <div class="modal-content modal-permisos" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>🛡️ Cambiar Rol de Empleado</h2>
+      <button class="close-btn" (click)="cerrarModalPermisos()">✖</button>
+    </div>
+
+    <div class="modal-body" *ngIf="empleadoSeleccionado">
+      <div class="empleado-info">
+        <div class="empleado-avatar">{{ getInitials(empleadoSeleccionado) }}</div>
+        <div class="empleado-details">
+          <h3>{{ empleadoSeleccionado.nombre }} {{ empleadoSeleccionado.apellido1 }}</h3>
+          <p>{{ empleadoSeleccionado.correo }}</p>
+          <span class="current-role">Rol actual: <strong>{{ empleadoSeleccionado.rol || 'Empleado' }}</strong></span>
+        </div>
+      </div>
+
+      <div class="roles-grid">
+        <div class="role-card" 
+             [class.selected]="nuevoRol === 'Cajero'"
+             (click)="nuevoRol = 'Cajero'">
+          <div class="role-icon">🧾</div>
+          <h4>Cajero</h4>
+          <p>Punto de venta, caja y sus reportes del día</p>
+          <ul class="role-perms">
+            <li>✅ Punto de Venta</li>
+            <li>✅ Abrir/Cerrar Caja</li>
+            <li>✅ Ver sus ventas del día</li>
+            <li>❌ Inventario</li>
+            <li>❌ Configuración</li>
+          </ul>
+        </div>
+
+        <div class="role-card" 
+             [class.selected]="nuevoRol === 'Almacenista'"
+             (click)="nuevoRol = 'Almacenista'">
+          <div class="role-icon">📦</div>
+          <h4>Almacenista</h4>
+          <p>Inventario y registro de mermas</p>
+          <ul class="role-perms">
+            <li>✅ Ver Inventario</li>
+            <li>✅ Agregar productos</li>
+            <li>✅ Registrar mermas</li>
+            <li>❌ Punto de Venta</li>
+            <li>❌ Reportes</li>
+          </ul>
+        </div>
+
+        <div class="role-card" 
+             [class.selected]="nuevoRol === 'Gerente'"
+             (click)="nuevoRol = 'Gerente'"
+             *ngIf="isDueno()">
+          <div class="role-icon">👔</div>
+          <h4>Gerente</h4>
+          <p>Acceso total excepto datos del negocio</p>
+          <ul class="role-perms">
+            <li>✅ Todo excepto:</li>
+            <li>❌ Editar nombre del negocio</li>
+            <li>✅ Crear empleados</li>
+            <li>✅ Descuentos masivos</li>
+            <li>✅ Reportes completos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn secondary" (click)="cerrarModalPermisos()">Cancelar</button>
+      <button class="btn primary" (click)="guardarNuevoRol()" [disabled]="!nuevoRol || nuevoRol === empleadoSeleccionado?.rol">
+        💾 Guardar Cambios
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 🆕 MODAL: ASIGNAR MÓDULOS EXTRA -->
+<div class="modal-overlay" *ngIf="showModalExtras" (click)="cerrarModalExtras()">
+  <div class="modal-content modal-extras" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>➕ Asignar Módulos Extra</h2>
+      <button class="close-btn" (click)="cerrarModalExtras()">✖</button>
+    </div>
+
+    <div class="modal-body" *ngIf="empleadoSeleccionado">
+      <div class="empleado-info">
+        <div class="empleado-avatar">{{ getInitials(empleadoSeleccionado) }}</div>
+        <div class="empleado-details">
+          <h3>{{ empleadoSeleccionado.nombre }} {{ empleadoSeleccionado.apellido1 }}</h3>
+          <span class="current-role">
+            Rol base: <strong>{{ empleadoSeleccionado.rol || 'Empleado' }}</strong>
+          </span>
+          <p class="modal-hint">
+            💡 Asigna módulos adicionales sin cambiar su rol. Ideal para cubrir ausencias temporales.
+          </p>
+        </div>
+      </div>
+
+      <!-- Indicador de módulos extra activos -->
+      <div class="extras-activos" *ngIf="empleadoSeleccionado.permisosExtra?.modulos?.length">
+        <div class="extras-header">
+          <span class="extras-icon">⚡</span>
+          <span>Módulos extra activos:</span>
+        </div>
+        <div class="extras-tags">
+          <span class="extra-tag" *ngFor="let m of empleadoSeleccionado.permisosExtra?.modulos">
+            {{ m }}
+          </span>
+        </div>
+        <small *ngIf="empleadoSeleccionado.permisosExtra?.asignadoPor">
+          Asignado por {{ empleadoSeleccionado.permisosExtra?.asignadoPor }}
+          <span *ngIf="empleadoSeleccionado.permisosExtra?.nota"> — {{ empleadoSeleccionado.permisosExtra?.nota }}</span>
+        </small>
+      </div>
+
+      <!-- Grid de módulos -->
+      <div class="modulos-grid">
+        <div 
+          class="modulo-card" 
+          *ngFor="let mod of modulosDisponibles"
+          [class.selected]="isModuloSelected(mod.id)"
+          [class.included]="moduloIncluidoEnRol(mod.id, empleadoSeleccionado.rol)"
+          (click)="!moduloIncluidoEnRol(mod.id, empleadoSeleccionado.rol) && toggleModulo(mod.id)">
+          
+          <div class="modulo-icon">{{ mod.icono }}</div>
+          <h4>{{ mod.nombre }}</h4>
+          <p>{{ mod.descripcion }}</p>
+          
+          <div class="modulo-status">
+            <span *ngIf="moduloIncluidoEnRol(mod.id, empleadoSeleccionado.rol)" class="status-included">
+              ✓ Ya incluido en su rol
+            </span>
+            <span *ngIf="!moduloIncluidoEnRol(mod.id, empleadoSeleccionado.rol) && isModuloSelected(mod.id)" class="status-selected">
+              ✓ Seleccionado
+            </span>
+            <span *ngIf="!moduloIncluidoEnRol(mod.id, empleadoSeleccionado.rol) && !isModuloSelected(mod.id)" class="status-available">
+              Click para asignar
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nota opcional -->
+      <div class="nota-section">
+        <label for="notaPermisos">📝 Nota (opcional)</label>
+        <input 
+          type="text" 
+          id="notaPermisos" 
+          [(ngModel)]="notaPermisos" 
+          placeholder="Ej: Cubre a Juan que está de vacaciones">
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn danger-outline" (click)="quitarTodosExtras()" 
+              *ngIf="empleadoSeleccionado?.permisosExtra?.modulos?.length">
+        🗑️ Quitar Todos
+      </button>
+      <button class="btn secondary" (click)="cerrarModalExtras()">Cancelar</button>
+      <button class="btn primary" (click)="guardarPermisosExtra()">
+        💾 Guardar Módulos Extra
+      </button>
+    </div>
+  </div>
+</div>
