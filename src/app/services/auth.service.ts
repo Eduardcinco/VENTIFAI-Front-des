@@ -62,9 +62,18 @@ export class AuthService {
     const body = { Correo: payload.email, Password: payload.password };
     return this.http.post<AuthResponse>(`${this.base}/login`, body, { withCredentials: true }).pipe(
       tap(res => {
+        console.log('✅ Login exitoso, respuesta:', res);
         // El backend ahora setea cookies HttpOnly automáticamente
         // Solo guardamos en memoria/storage para compatibilidad
         this.handleAuthResponse(res);
+        
+        // DEBUG: Mostrar cookies después del login
+        console.log('📋 Cookies después del login:', document.cookie);
+        console.log('🔍 Verificando si existe refresh_token...');
+        const allCookies = document.cookie.split(';').map(c => c.trim());
+        allCookies.forEach(cookie => {
+          console.log('  - Cookie encontrada:', cookie.substring(0, 50) + (cookie.length > 50 ? '...' : ''));
+        });
       })
     );
   }
@@ -84,7 +93,11 @@ export class AuthService {
    * El backend lee la cookie refresh_token automáticamente
    */
   refreshToken(): Observable<AuthResponse> {
+    // DEBUG: Mostrar todas las cookies disponibles en el navegador
     console.log('🔄 Intentando refrescar token desde:', this.refreshEndpoint);
+    console.log('📋 Cookies en el navegador:', document.cookie);
+    console.log('🔍 UserAgent:', navigator.userAgent);
+    
     // Enviamos body vacío - el backend usa la cookie
     return this.http.post<AuthResponse>(this.refreshEndpoint, {}, { withCredentials: true }).pipe(
       tap(res => {
@@ -96,6 +109,7 @@ export class AuthService {
           status: err.status,
           statusText: err.statusText,
           message: err.error?.message,
+          debugInfo: err.error?.debug,
           url: err.url,
           fullError: err
         });
