@@ -84,10 +84,21 @@ export class AuthService {
    * El backend lee la cookie refresh_token automáticamente
    */
   refreshToken(): Observable<AuthResponse> {
+    console.log('🔄 Intentando refrescar token desde:', this.refreshEndpoint);
     // Enviamos body vacío - el backend usa la cookie
     return this.http.post<AuthResponse>(this.refreshEndpoint, {}, { withCredentials: true }).pipe(
-      tap(res => this.handleAuthResponse(res)),
+      tap(res => {
+        console.log('✅ Token refrescado exitosamente:', res);
+        this.handleAuthResponse(res);
+      }),
       catchError(err => {
+        console.error('❌ Error al refrescar token:', {
+          status: err.status,
+          statusText: err.statusText,
+          message: err.error?.message,
+          url: err.url,
+          fullError: err
+        });
         this.clearSession();
         return throwError(() => err);
       })

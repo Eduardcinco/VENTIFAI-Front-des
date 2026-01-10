@@ -77,15 +77,19 @@ export class AuthInterceptor implements HttpInterceptor {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(false);
 
+      console.log('⚠️ Detectado 401 en:', req.url, '- Intentando refrescar token...');
+
       // El refresh ahora usa cookies HttpOnly - no necesita token en storage
       return this.auth.refreshToken().pipe(
         switchMap(() => {
+          console.log('✅ Token refrescado, reintentando request...');
           this.isRefreshing = false;
           this.refreshTokenSubject.next(true);
           // Reintentar request original con nuevas credenciales
           return next.handle(this.addCredentials(req));
         }),
         catchError((err) => {
+          console.error('❌ Fallo al refrescar token en interceptor:', err);
           this.isRefreshing = false;
           this.toast.error('No se pudo refrescar la sesión.');
           this.auth.logout().subscribe();
