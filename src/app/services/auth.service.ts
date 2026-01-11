@@ -97,9 +97,21 @@ export class AuthService {
     console.log('🔄 Intentando refrescar token desde:', this.refreshEndpoint);
     console.log('📋 Cookies en el navegador:', document.cookie);
     console.log('🔍 UserAgent:', navigator.userAgent);
-    
-    // Enviamos body vacío - el backend usa la cookie
-    return this.http.post<AuthResponse>(this.refreshEndpoint, {}, { withCredentials: true }).pipe(
+
+    // Detectar si la cookie refresh_token existe
+    const hasRefreshCookie = document.cookie.split(';').some(c => c.trim().startsWith('refresh_token='));
+    let body: any = {};
+    if (!hasRefreshCookie) {
+      // Si no existe la cookie, usar el valor de sessionStorage
+      const storedRefreshToken = sessionStorage.getItem('refreshToken');
+      if (storedRefreshToken) {
+        body = { refreshToken: storedRefreshToken };
+        console.log('⚠️ Enviando refreshToken en el body:', body);
+      } else {
+        console.warn('❌ No hay refresh_token en cookie ni en sessionStorage');
+      }
+    }
+    return this.http.post<AuthResponse>(this.refreshEndpoint, body, { withCredentials: true }).pipe(
       tap(res => {
         console.log('✅ Token refrescado exitosamente:', res);
         this.handleAuthResponse(res);

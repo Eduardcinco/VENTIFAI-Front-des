@@ -1,3 +1,8 @@
+[[redirects]]
+  from = "/api/*"
+  to = "https://ventifai-back-des-production.up.railway.app/:splat"
+  status = 200
+  force = true
 [build]
   command = "ng build --configuration production"
   publish = "dist/FRONT/browser"
