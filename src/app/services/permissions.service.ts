@@ -89,14 +89,18 @@ export class PermissionsService {
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar acentos
       .replace('ñ', 'n');
     
-    if (['dueno', 'dueño', 'owner', 'admin'].some(r => rol.includes(r))) {
-      return 'dueno';
-    }
-    if (rol.includes('gerente') || rol.includes('manager')) {
-      return 'gerente';
-    }
-    if (rol.includes('cajero') || rol.includes('cashier')) {
-      return 'cajero';
+      let rol = (this.authService.getRole() || '').toLowerCase();
+      // Normalizar tildes y variantes
+      rol = rol.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n');
+      // Forzar dueño si contiene cualquiera de estas variantes
+      if (/(dueno|dueño|owner|admin)/.test(rol)) {
+        return 'dueno';
+      }
+      if (rol.includes('gerente') || rol.includes('manager')) {
+        return 'gerente';
+      }
+      if (rol.includes('cajero') || rol.includes('cashier')) {
+        return 'cajero';
     }
     if (rol.includes('almacen') || rol.includes('bodega') || rol.includes('warehouse')) {
       return 'almacenista';
