@@ -1,0 +1,3 @@
+/api/*    https://ventifai-back-des-production.up.railway.app/:splat   200
+/api//auth/*    https://ventifai-back-des-production.up.railway.app/api/auth/:splat   200!
+/*        /index.html   200
