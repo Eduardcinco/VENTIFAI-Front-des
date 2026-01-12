@@ -53,7 +53,7 @@ export interface AiMetricsResponse {
   providedIn: 'root'
 })
 export class AiService {
-  private readonly apiUrl = `${environment.apiUrl}//ai`;
+  private readonly apiUrl = `${environment.apiUrl}/ai`;
 
   constructor(private http: HttpClient) {}
 

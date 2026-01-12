@@ -35,8 +35,8 @@ interface AuthResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private base = `${environment.apiUrl}//auth`;
-  private systemBase = `${environment.apiUrl}//system`;
+  private base = `${environment.apiUrl}/auth`;
+  private systemBase = `${environment.apiUrl}/system`;
   private refreshEndpoint = `${this.base}/refresh`;
 
   // 🔐 CACHÉ EN MEMORIA (no en storage)

@@ -6,7 +6,7 @@ import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class VentasService {
-  private base = `${environment.apiUrl}//ventas`;
+  private base = `${environment.apiUrl}/ventas`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 

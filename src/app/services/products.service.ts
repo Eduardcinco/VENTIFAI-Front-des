@@ -35,7 +35,7 @@ export interface Product {
 @Injectable({ providedIn: 'root' })
 export class ProductsService {
   // RUTA CORRECTA: http://localhost:5129/api/producto
-  private base = `${environment.apiUrl}//producto`;
+  private base = `${environment.apiUrl}/producto`;
 
   constructor(private http: HttpClient, private auth: AuthService, private biz: BusinessContextService) {}
 

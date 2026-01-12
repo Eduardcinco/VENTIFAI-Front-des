@@ -53,7 +53,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
 // Función para refrescar el token
 function refreshToken(): Observable<string> {
-  const refreshUrl = `${environment.apiUrl}//auth/refresh`;
+  const refreshUrl = `${environment.apiUrl}/auth/refresh`;
   // Usar fetch directamente para evitar dependencias circulares
   return new Observable<string>((observer) => {
     fetch(refreshUrl, {

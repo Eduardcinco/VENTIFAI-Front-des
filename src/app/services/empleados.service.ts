@@ -30,8 +30,8 @@ export interface Empleado {
 
 @Injectable({ providedIn: 'root' })
 export class EmpleadosService {
-  private base = `${environment.apiUrl}//usuarios`;
-  private legacyAuthBase = `${environment.apiUrl}//auth`;
+  private base = `${environment.apiUrl}/usuarios`;
+  private legacyAuthBase = `${environment.apiUrl}/auth`;
   constructor(private http: HttpClient, private biz: BusinessContextService) {}
 
   getEmpleados(): Observable<Empleado[]> {

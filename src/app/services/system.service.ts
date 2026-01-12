@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SystemService {
-  private base = `${environment.apiUrl}//system`;
+  private base = `${environment.apiUrl}/system`;
   constructor(private http: HttpClient) {}
 
   getTime(): Observable<{ nowUtc: string }> {

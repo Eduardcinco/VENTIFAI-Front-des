@@ -15,7 +15,7 @@ export interface MovimientoCaja {
 
 @Injectable({ providedIn: 'root' })
 export class CajaService {
-  private base = `${environment.apiUrl}//caja`;
+  private base = `${environment.apiUrl}/caja`;
   // Standardized caja state: { abierta: boolean, caja: Caja|null }
   private currentSubject = new BehaviorSubject<{ abierta: boolean; caja: any | null }>({ abierta: false, caja: null });
   current$ = this.currentSubject.asObservable();
