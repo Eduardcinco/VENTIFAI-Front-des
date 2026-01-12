@@ -6,7 +6,7 @@ import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class CategoriesService {
-  private apiUrl = `${environment.apiUrl}/api/categories`;
+  private apiUrl = `${environment.apiUrl}//categories`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 

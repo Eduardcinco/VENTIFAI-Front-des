@@ -14,7 +14,7 @@ import { saveAs } from 'file-saver';
   providedIn: 'root'
 })
 export class ReportsService {
-  private base = `${environment.apiUrl}/api`;
+  private base = `${environment.apiUrl}/`;
 
   constructor(private http: HttpClient, private biz: BusinessContextService) {}
 

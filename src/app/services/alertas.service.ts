@@ -16,7 +16,7 @@ export interface ProductoStockBajo {
   providedIn: 'root'
 })
 export class AlertasService {
-  private base = `${environment.apiUrl}/api/producto`;
+  private base = `${environment.apiUrl}//producto`;
   private stockBajoCount$ = new BehaviorSubject<number>(0);
   private productos$ = new BehaviorSubject<ProductoStockBajo[]>([]);
 
