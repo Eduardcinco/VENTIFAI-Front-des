@@ -85,27 +85,22 @@ export class PermissionsService {
    * Obtener el rol normalizado del usuario actual
    */
   getRol(): RolUsuario {
-    const rol = (this.authService.getRole() || '').toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar acentos
-      .replace('ñ', 'n');
-    
-      let rol = (this.authService.getRole() || '').toLowerCase();
-      // Normalizar tildes y variantes
-      rol = rol.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n');
-      // Forzar dueño si contiene cualquiera de estas variantes
-      if (/(dueno|dueño|owner|admin)/.test(rol)) {
-        return 'dueno';
-      }
-      if (rol.includes('gerente') || rol.includes('manager')) {
-        return 'gerente';
-      }
-      if (rol.includes('cajero') || rol.includes('cashier')) {
-        return 'cajero';
+    let rol = (this.authService.getRole() || '').toLowerCase();
+    // Normalizar tildes y variantes
+    rol = rol.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n');
+    // Forzar dueño si contiene cualquiera de estas variantes
+    if (/(dueno|duenio|duenyo|duenno|owner|admin)/.test(rol)) {
+      return 'dueno';
+    }
+    if (rol.includes('gerente') || rol.includes('manager')) {
+      return 'gerente';
+    }
+    if (rol.includes('cajero') || rol.includes('cashier')) {
+      return 'cajero';
     }
     if (rol.includes('almacen') || rol.includes('bodega') || rol.includes('warehouse')) {
       return 'almacenista';
     }
-    
     // Por defecto, si el rol no coincide, tratarlo como cajero (permisos mínimos)
     return 'cajero';
   }
