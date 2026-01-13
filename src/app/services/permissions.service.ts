@@ -83,13 +83,31 @@ export class PermissionsService {
 
   /**
    * Obtener el rol normalizado del usuario actual
+   * 🔒 NUNCA degrada a "cajero" si hay un rol válido en sesión
    */
   getRol(): RolUsuario {
-    const rolCrudo = this.authService.getRole();
+    // Intento 1: Obtener desde getRole() (caché en memoria del AuthService)
+    let rolCrudo = this.authService.getRole();
+    
+    // Intento 2: Si no hay en caché, intentar desde getCurrentSession() (fallback a storage)
+    if (!rolCrudo) {
+      const session = this.authService.getCurrentSession();
+      if (session?.rol) {
+        rolCrudo = session.rol;
+        console.log('📦 Rol recuperado desde sesión en caché:', rolCrudo);
+      }
+    }
+
+    // Si aún no hay rol, usar "cajero" como default (pero loguear la situación)
+    if (!rolCrudo) {
+      console.warn('⚠️ Rol no encontrado, usando default "cajero"');
+      return 'cajero';
+    }
+
     let rol = (rolCrudo || '').toLowerCase();
     rol = rol.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n');
-    console.log('Rol crudo:', rolCrudo);
-    console.log('Rol normalizado:', rol);
+    console.log('✅ Rol crudo:', rolCrudo, '→ Normalizado:', rol);
+    
     if (/(dueno|duenio|duenyo|duenno|owner|admin)/.test(rol)) {
       return 'dueno';
     }
@@ -102,7 +120,9 @@ export class PermissionsService {
     if (rol.includes('almacen') || rol.includes('bodega') || rol.includes('warehouse')) {
       return 'almacenista';
     }
-    // Por defecto, si el rol no coincide, tratarlo como cajero (permisos mínimos)
+    
+    // Si el rol no coincide con patrones conocidos, mantener la sesión existente
+    console.warn('⚠️ Rol no reconocido:', rolCrudo, '- usando default "cajero"');
     return 'cajero';
   }
 

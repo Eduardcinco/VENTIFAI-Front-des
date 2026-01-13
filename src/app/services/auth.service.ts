@@ -149,15 +149,15 @@ login(payload: { email: string; password: string }): Observable<AuthResponse> {
    * Útil porque el frontend ya no puede leer el JWT (es HttpOnly)
    */
   getSession(): Observable<SessionInfo> {
-    // Si ya tenemos caché válido, devolverlo
+    // Si ya tenemos caché válido, devolverlo INMEDIATAMENTE
     if (this.sessionCache && this.sessionCache.name && this.sessionCache.rol) {
+      console.log('📦 Usando sesión en caché (válida):', { name: this.sessionCache.name, rol: this.sessionCache.rol });
       return of(this.sessionCache);
     }
     return this.http.get<SessionInfo>(`${this.systemBase}/session`, { withCredentials: true }).pipe(
       tap(session => {
-        // Refuerzo: si el backend responde con nombre y rol válidos, guardar en caché
+        // Si el backend responde con nombre y rol válidos, actualizar caché
         if (session && session.name && session.rol) {
-          // Normalizar rol a minúsculas
           const normalizedSession: SessionInfo = {
             ...session,
             rol: (session.rol || '').toLowerCase(),
@@ -167,14 +167,29 @@ login(payload: { email: string; password: string }): Observable<AuthResponse> {
           this.session$.next(normalizedSession);
           console.log('✅ Sesión refrescada desde backend:', { name: normalizedSession.name, rol: normalizedSession.rol });
         } else {
-          // Si el backend responde sin datos válidos, limpiar sesión
-          console.warn('❌ Backend devolvió sesión inválida:', session);
-          this.clearSession();
+          // Backend respondió sin datos válidos → intentar recuperar desde storage
+          console.warn('⚠️ Backend devolvió sesión inválida, intentando recuperar desde storage...');
+          this.loadFromStorageIfExists();
+          if (!this.sessionCache) {
+            this.clearSession();
+          }
         }
       }),
       catchError(err => {
-        // Si falla (401/404), limpiar sesión
-        console.error('❌ Error refrescando sesión:', err.status, err.statusText);
+        // Si falla (404/401/etc), NO limpiar inmediatamente
+        console.warn('⚠️ getSession() falló (status:', err.status, '), intentando recuperar desde storage...');
+        
+        // Intentar recuperar sesión desde storage (fallback)
+        this.loadFromStorageIfExists();
+        
+        // Si aún hay datos en caché, devolverlos (no limpiar)
+        if (this.sessionCache && this.sessionCache.name && this.sessionCache.rol) {
+          console.log('✅ Sesión recuperada desde storage (fallback):', { name: this.sessionCache.name, rol: this.sessionCache.rol });
+          return of(this.sessionCache);
+        }
+        
+        // Solo si NO hay nada en ningún lado, limpiar y fallar
+        console.error('❌ No hay sesión válida en ningún lado, limpiando...');
         this.clearSession();
         return throwError(() => err);
       })
@@ -227,8 +242,15 @@ login(payload: { email: string; password: string }): Observable<AuthResponse> {
   }
 
   getUserName(): string | undefined {
-    if (this.sessionCache?.name) return this.sessionCache.name;
-    return this.getFromHybridStorage('name');
+    // 🔒 NUNCA devolver undefined si hay un nombre en caché
+    if (this.sessionCache?.name && this.sessionCache.name !== 'Usuario') {
+      return this.sessionCache.name;
+    }
+    // Fallback a storage
+    const stored = this.getFromHybridStorage('name');
+    if (stored) return String(stored);
+    // Solo si no hay nada en ningún lado, devolver undefined
+    return undefined;
   }
 
   getUserEmail(): string | undefined {
