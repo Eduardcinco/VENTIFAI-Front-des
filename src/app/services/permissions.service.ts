@@ -85,8 +85,11 @@ export class PermissionsService {
    * Obtener el rol normalizado del usuario actual
    */
   getRol(): RolUsuario {
-    let rol = (this.authService.getRole() || '').toLowerCase();
+    const rolCrudo = this.authService.getRole();
+    let rol = (rolCrudo || '').toLowerCase();
     rol = rol.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n');
+    console.log('Rol crudo:', rolCrudo);
+    console.log('Rol normalizado:', rol);
     if (/(dueno|duenio|duenyo|duenno|owner|admin)/.test(rol)) {
       return 'dueno';
     }

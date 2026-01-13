@@ -150,18 +150,31 @@ login(payload: { email: string; password: string }): Observable<AuthResponse> {
    */
   getSession(): Observable<SessionInfo> {
     // Si ya tenemos caché válido, devolverlo
-    if (this.sessionCache) {
+    if (this.sessionCache && this.sessionCache.name && this.sessionCache.rol) {
       return of(this.sessionCache);
     }
-
     return this.http.get<SessionInfo>(`${this.systemBase}/session`, { withCredentials: true }).pipe(
       tap(session => {
-        this.sessionCache = session;
-        this.session$.next(session);
-        // Los permisosExtra ya vienen en la sesión, no necesitamos localStorage
+        // Refuerzo: si el backend responde con nombre y rol válidos, guardar en caché
+        if (session && session.name && session.rol) {
+          // Normalizar rol a minúsculas
+          const normalizedSession: SessionInfo = {
+            ...session,
+            rol: (session.rol || '').toLowerCase(),
+            name: session.name || 'Usuario'
+          };
+          this.sessionCache = normalizedSession;
+          this.session$.next(normalizedSession);
+          console.log('✅ Sesión refrescada desde backend:', { name: normalizedSession.name, rol: normalizedSession.rol });
+        } else {
+          // Si el backend responde sin datos válidos, limpiar sesión
+          console.warn('❌ Backend devolvió sesión inválida:', session);
+          this.clearSession();
+        }
       }),
       catchError(err => {
-        // Si falla (401), limpiar sesión
+        // Si falla (401/404), limpiar sesión
+        console.error('❌ Error refrescando sesión:', err.status, err.statusText);
         this.clearSession();
         return throwError(() => err);
       })
@@ -323,18 +336,22 @@ login(payload: { email: string; password: string }): Observable<AuthResponse> {
   // ============================================
 
   private handleAuthResponse(res: AuthResponse) {
-    // Guardar en memoria
+    // Guardar en memoria con validación estricta
     if (res.usuario) {
+      const userName = res.usuario.nombre || res.usuario.name || 'Usuario';
+      const userRole = res.usuario.rol || res.usuario.Rol || 'cajero';
+      
       this.sessionCache = {
         userId: res.usuario.id || res.usuario.userId,
-        rol: res.usuario.rol || res.usuario.Rol,
+        rol: userRole.toLowerCase(), // Normalizar a minúsculas
         negocioId: res.usuario.negocioId || res.negocioId,
         email: res.usuario.correo || res.usuario.email,
-        name: res.usuario.nombre || res.usuario.name,
+        name: userName, // Nunca vacío
         primerAcceso: res.primerAcceso,
         // Los permisosExtra vienen del backend
         permisosExtra: res.usuario.permisosExtra || res['permisosExtra']
       };
+      console.log('✅ Sesión cargada en memoria:', { name: this.sessionCache.name, rol: this.sessionCache.rol, userId: this.sessionCache.userId });
       this.session$.next(this.sessionCache);
     }
 

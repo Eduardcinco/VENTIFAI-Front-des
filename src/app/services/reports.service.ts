@@ -14,7 +14,7 @@ import { saveAs } from 'file-saver';
   providedIn: 'root'
 })
 export class ReportsService {
-  private base = `${environment.apiUrl}/`;
+  private base = `${environment.apiUrl}/reportes`;
 
   constructor(private http: HttpClient, private biz: BusinessContextService) {}
 
@@ -88,7 +88,7 @@ export class ReportsService {
       });
     }
 
-    return this.http.get<ReporteVentasCompleto>(`${this.base}/reportes/ventas`, {
+    return this.http.get<ReporteVentasCompleto>(`${this.base}/ventas`, {
       params,
       withCredentials: true,
       ...this.buildHeaders()
@@ -115,7 +115,7 @@ export class ReportsService {
       cajerosIds: filtro.cajerosIds || []
     };
 
-    return this.http.post(`${this.base}/reportes/ventas/exportar`, body, {
+    return this.http.post(`${this.base}/ventas/exportar`, body, {
       responseType: 'blob',
       withCredentials: true,
       ...this.buildHeaders()
@@ -157,7 +157,7 @@ export class ReportsService {
     if (desde || hasta) {
       params = `?${desde ? `desde=${desde}` : ''}${hasta ? `&hasta=${hasta}` : ''}`;
     }
-    return this.http.get<any[]>(`${this.base}/reportes/ventas/dia${params}`, this.buildHeaders());
+    return this.http.get<any[]>(`${this.base}/ventas/dia${params}`, this.buildHeaders());
   }
 
   getVentasPorSemana(desde?: string, hasta?: string): Observable<any[]> {
@@ -165,28 +165,28 @@ export class ReportsService {
     if (desde || hasta) {
       params = `?${desde ? `desde=${desde}` : ''}${hasta ? `&hasta=${hasta}` : ''}`;
     }
-    return this.http.get<any[]>(`${this.base}/reportes/ventas/semana${params}`, this.buildHeaders());
+    return this.http.get<any[]>(`${this.base}/ventas/semana${params}`, this.buildHeaders());
   }
 
   getVentasPorMes(anio: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/reportes/ventas/mes?anio=${anio}` , this.buildHeaders());
+    return this.http.get<any[]>(`${this.base}/ventas/mes?anio=${anio}` , this.buildHeaders());
   }
 
   getVentasPorAnio(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/reportes/ventas/anio`, this.buildHeaders());
+    return this.http.get<any[]>(`${this.base}/ventas/anio`, this.buildHeaders());
   }
 
   // Reportes de inventario
   getInventario(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/reportes/inventario`, this.buildHeaders());
+    return this.http.get<any[]>(`${this.base}/inventario`, this.buildHeaders());
   }
 
   getInventarioPorCategoria(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/reportes/inventario/categoria`, this.buildHeaders());
+    return this.http.get<any[]>(`${this.base}/inventario/categoria`, this.buildHeaders());
   }
 
   getInventarioStockBajo(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/reportes/inventario/stock-bajo`, this.buildHeaders());
+    return this.http.get<any[]>(`${this.base}/inventario/stock-bajo`, this.buildHeaders());
   }
 
   // PDFs
@@ -199,7 +199,7 @@ export class ReportsService {
     if (categoria || stockBajo) {
       params = `?${categoria ? `categoria=${categoria}` : ''}${stockBajo ? `&stockBajo=${stockBajo}` : ''}`;
     }
-    return this.http.get(`${this.base}/producto/inventario-pdf${params}`, { responseType: 'blob', ...this.buildHeaders() });
+    return this.http.get(`${this.base}/inventario/inventario-pdf${params}`, { responseType: 'blob', ...this.buildHeaders() });
   }
 
   /**
