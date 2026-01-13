@@ -86,9 +86,7 @@ export class PermissionsService {
    */
   getRol(): RolUsuario {
     let rol = (this.authService.getRole() || '').toLowerCase();
-    // Normalizar tildes y variantes
     rol = rol.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n');
-    // Forzar dueño si contiene cualquiera de estas variantes
     if (/(dueno|duenio|duenyo|duenno|owner|admin)/.test(rol)) {
       return 'dueno';
     }
