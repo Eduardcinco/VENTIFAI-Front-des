@@ -58,25 +58,24 @@ export class AuthService {
   // 🔐 MÉTODOS DE AUTENTICACIÓN
   // ============================================
 
-  login(payload: { email: string; password: string }): Observable<AuthResponse> {
-    const body = { Correo: payload.email, Password: payload.password };
-    return this.http.post<AuthResponse>(`${this.base}/login`, body, { withCredentials: true }).pipe(
-      tap(res => {
-        console.log('✅ Login exitoso, respuesta:', res);
-        // El backend ahora setea cookies HttpOnly automáticamente
-        // Solo guardamos en memoria/storage para compatibilidad
-        this.handleAuthResponse(res);
-        
-        // DEBUG: Mostrar cookies después del login
-        console.log('📋 Cookies después del login:', document.cookie);
-        console.log('🔍 Verificando si existe refresh_token...');
-        const allCookies = document.cookie.split(';').map(c => c.trim());
-        allCookies.forEach(cookie => {
-          console.log('  - Cookie encontrada:', cookie.substring(0, 50) + (cookie.length > 50 ? '...' : ''));
-        });
-      })
-    );
-  }
+login(payload: { email: string; password: string }): Observable<AuthResponse> {
+  const body = { Correo: payload.email, Password: payload.password };
+  
+  // TEMPORAL: URL completa para que entre
+  const url = 'https://ventifai-back-des-production.up.railway.app/api/auth/login';  // si tu ruta en backend es /api/auth/login
+
+  return this.http.post<AuthResponse>(url, body, { withCredentials: true }).pipe(
+    tap(res => {
+      console.log('✅ Login exitoso, respuesta:', res);
+      this.handleAuthResponse(res);
+      console.log('📋 Cookies después del login:', document.cookie);
+    }),
+    catchError(err => {
+      console.error('❌ Error login:', err);
+      return throwError(() => err);
+    })
+  );
+}
 
   register(payload: { businessName?: string; name: string; email: string; password: string }): Observable<AuthResponse> {
     const body: any = { Nombre: payload.name, Correo: payload.email, Password: payload.password };
