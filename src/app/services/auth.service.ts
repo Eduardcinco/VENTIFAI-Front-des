@@ -61,8 +61,8 @@ export class AuthService {
 login(payload: { email: string; password: string }): Observable<AuthResponse> {
   const body = { Correo: payload.email, Password: payload.password };
   
-  // TEMPORAL: URL completa para que entre
-  const url = 'https://ventifai-back-des-production.up.railway.app/api/auth/login';  // si tu ruta en backend es /api/auth/login
+  // ✅ CORRECTO: Usar environment.apiUrl
+  const url = `${this.base}/login`;
 
   return this.http.post<AuthResponse>(url, body, { withCredentials: true }).pipe(
     tap(res => {
